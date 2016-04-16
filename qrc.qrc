@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/new/prefix1">
+        <file>images/open.png</file>
+        <file>images/save.png</file>
+        <file>images/exit.png</file>
+        <file>images/saveAs.png</file>
+        <file>images/connect.png</file>
+        <file>images/disconnect.png</file>
+        <file>images/setting.png</file>
+        <file>images/download.png</file>
+        <file>images/compile.png</file>
+        <file>images/burn.png</file>
+    </qresource>
+</RCC>
