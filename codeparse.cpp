@@ -172,6 +172,7 @@ bool codeParse::parseLcdInit(QString data)
 {
     QRegExp rxDec("\\d+");
     QRegExp rxHex("0x[0-9A-Fa-f]+");
+
     bool ok;
     //    lcdInit<<"package"<<"write"<<"delay"<<"read";
    // qDebug()<<data;
@@ -180,6 +181,9 @@ bool codeParse::parseLcdInit(QString data)
     QStringList strList=data.split(QRegExp("\n+"),QString::SkipEmptyParts);
     foreach(QString s,strList)
     {
+        QRegExp rxSpace("\\s+");
+        if(rxSpace.exactMatch(s))
+            continue;
         if((s.contains(QRegExp("\\bpackage\\s*=\\s*"))) || (s.contains(QRegExp("^write\\s+"))) \
                 || (s.contains(QRegExp("^read\\s+"))) || (s.contains(QRegExp("^delay\\s+"))))
         {
