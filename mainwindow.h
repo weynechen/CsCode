@@ -42,7 +42,7 @@ private:
     QVBoxLayout *commandLayout;
     QList<command_type> commandList;
 
-    QString savedFileName;
+    QString savedFilePath;
 
     codeParse *parse;
     QLabel *status;
@@ -57,6 +57,7 @@ private:
 private slots:
     void fileOpen();
     void fileSave();
+    void fileSaveAs();
     void enableFileSave();
     void parseCode(void);
     void parseCommand(QString str);

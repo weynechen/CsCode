@@ -8,7 +8,7 @@ QT       += core gui serialport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = FileHandle
+TARGET = CsCode
 TEMPLATE = app
 
 
@@ -38,3 +38,4 @@ FORMS    += mainwindow.ui \
 
 RESOURCES += \
     qrc.qrc
+RC_FILE +=CsCode.rc

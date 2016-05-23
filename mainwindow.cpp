@@ -92,6 +92,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //菜单信号槽
     connect(ui->actionOpenFile,SIGNAL(triggered(bool)),this,SLOT(fileOpen()));
     connect(ui->actionSaveFile,SIGNAL(triggered(bool)),this,SLOT(fileSave()));
+    connect(ui->actionSaveAs,SIGNAL(triggered(bool)),this,SLOT(fileSaveAs()));
     connect(ui->actionExit,SIGNAL(triggered(bool)),this,SLOT(close()));
     connect(ui->actionCompile,SIGNAL(triggered(bool)),this,SLOT(parseCode()));
     connect(ui->actionCloseSerial,SIGNAL(triggered(bool)),this,SLOT(closeSerialPort()));
@@ -278,14 +279,14 @@ void MainWindow::fileOpen()
                 this,
                 "Open file",
                 ".",
-                "text file(*.txt);;All file(*.*)"
+                "cool saven file(*.csc);;All file(*.*)"
                 );
     if(fileName.isEmpty())
     {
         return;
     }
 
-    savedFileName=fileName;
+    savedFilePath=fileName;
 
     QFile TextFile(fileName);
 
@@ -301,36 +302,64 @@ void MainWindow::fileOpen()
 
 void MainWindow::fileSave()
 {
-    if(savedFileName.isEmpty())
-        savedFileName=QFileDialog::getSaveFileName(this,
+    if(savedFilePath.isEmpty())
+        savedFilePath=QFileDialog::getSaveFileName(this,
                                                       QStringLiteral("保存"),
                                                        ".",
-                                                      "text(*.txt)"
+                                                      "cool saven file(*.csc)"
                                                       );
-    if(savedFileName.isEmpty())
+    if(savedFilePath.isEmpty())
     {
         return;
     }
     else
     {
-        saveFile(savedFileName);
+        saveFile(savedFilePath);
     }
 
     ui->actionSaveFile->setEnabled(false);
-        this->setWindowTitle("CoolSaven LCM inspection");
+    this->setWindowTitle("CS Code  --  "+savedFilePath);
+}
+
+void MainWindow::fileSaveAs()
+{
+    QString fileName=QFileDialog::getSaveFileName(
+                this,
+                QStringLiteral("另存为"),
+                ".",
+                "cool saven file(*.csc);;All file(*.*)"
+                );
+    if(fileName.isEmpty())
+    {
+        return;
+    }
+    else
+    {
+        saveFile(fileName);
+    }
 }
 
 void MainWindow::enableFileSave()
 {
-    if(codeEdit->toPlainText().isEmpty())
+    if(savedFilePath.isEmpty())
     {
-        ui->actionSaveFile->setEnabled(false);
-        this->setWindowTitle("CoolSaven LCM inspection");
+        this->setWindowTitle("CS Code  --  empity workspace");
+        return;
     }
     else
     {
-        ui->actionSaveFile->setEnabled(true);
-        this->setWindowTitle("*CoolSaven LCM inspection");
+
+        if(codeEdit->toPlainText().isEmpty())
+        {
+            ui->actionSaveFile->setEnabled(false);
+            this->setWindowTitle("CS Code  --  "+savedFilePath);
+        }
+        else
+        {
+            ui->actionSaveFile->setEnabled(true);
+            this->setWindowTitle("*CS Code --  "+savedFilePath);
+
+        }
     }
 }
 
