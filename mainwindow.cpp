@@ -204,6 +204,9 @@ void MainWindow::handleError(QSerialPort::SerialPortError error)
 
 void MainWindow::openSerialPort()
 {
+    if(serial->isOpen())
+        serial->close();
+
     SettingsDialog::Settings p = serialSettingDialog->settings();
     serial->setPortName(p.name);
     serial->setBaudRate(p.baudRate);

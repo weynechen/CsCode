@@ -37,39 +37,39 @@ bool codeParse::parsePower(QString data)
         bool match=rx.exactMatch(strLine);
         if(match)
         {
-           // qDebug()<<"match"<<strLine;
+            // qDebug()<<"match"<<strLine;
             switch(powerStr.indexOf(QRegExp(strLine)))
             {
-                case 0:
-                    power |=0x01;
+            case 0:
+                power |=0x01;
 
-                    break;
-                case 1:
-                    power |=0x2;
-                    break;
-                case 2:
-                    power |=0x4;
-                    break;
-                   case 3:
-                    power |= 0x8;
-                    break;
-                case 4:
-                    power |=0x10;
-                    break;
-                default:
-                    //qDebug()<<"power error!";
-                    emit Info("Error:power error");
-                    return false;
-                  //  break;
+                break;
+            case 1:
+                power |=0x2;
+                break;
+            case 2:
+                power |=0x4;
+                break;
+            case 3:
+                power |= 0x8;
+                break;
+            case 4:
+                power |=0x10;
+                break;
+            default:
+                //qDebug()<<"power error!";
+                emit Info("Error:power error");
+                return false;
+                //  break;
             }
-        //    qDebug()<<power;
+            //    qDebug()<<power;
 
         }
         else
         {
             emit Info("Error:power error");
             return false;
-//            qDebug()<<"No match";
+            //            qDebug()<<"No match";
         }
     }
     return true;
@@ -85,7 +85,7 @@ bool codeParse::parseBacklight(QString data)
     int count=rx.indexIn(data);
     if(count!=0)
     {
-       // qDebug("error backlight para");
+        // qDebug("error backlight para");
         emit Info("Error:backlight para setting error")  ;
         return false;
     }
@@ -97,8 +97,8 @@ bool codeParse::parseBacklight(QString data)
     {
         if(backlight<=maxCurrent)
         {
-          //  qDebug()<<backlight;
-             return true;
+            //  qDebug()<<backlight;
+            return true;
         }
     }
     emit Info("Error:backliaght parameter setting error");
@@ -125,7 +125,7 @@ bool codeParse::parseLcdPara(QString data)
     {
         if(data.indexOf(s)==-1)
         {
-           // qDebug()<<"lcd parameter setting error,not found"<<s;
+            // qDebug()<<"lcd parameter setting error,not found"<<s;
             emit Info("Error:lcd parameter setting error")  ;
             return false;
         }
@@ -160,12 +160,12 @@ bool codeParse::parseLcdPara(QString data)
             }
 
             //qDebug()<<"lcd para"<<strLine;
-           //if()
+            //if()
             // lcdPara<<strLine.toInt();
         }
     }
     //qDebug()<<data;
-            return true;
+    return true;
 }
 
 bool codeParse::parseLcdInit(QString data)
@@ -175,15 +175,18 @@ bool codeParse::parseLcdInit(QString data)
 
     bool ok;
     //    lcdInit<<"package"<<"write"<<"delay"<<"read";
-   // qDebug()<<data;
+    // qDebug()<<data;
     lcdInitPara.clear();
 
     QStringList strList=data.split(QRegExp("\n+"),QString::SkipEmptyParts);
     foreach(QString s,strList)
     {
+
+
         QRegExp rxSpace("\\s+");
         if(rxSpace.exactMatch(s))
             continue;
+        s.remove("\t");
         if((s.contains(QRegExp("\\bpackage\\s*=\\s*"))) || (s.contains(QRegExp("^write\\s+"))) \
                 || (s.contains(QRegExp("^read\\s+"))) || (s.contains(QRegExp("^delay\\s+"))))
         {
@@ -209,7 +212,7 @@ bool codeParse::parseLcdInit(QString data)
             }
             else
             {
-               // qDebug()<<"error";
+                // qDebug()<<"error";
                 emit Info("Error:lcd package setting error")  ;
                 return false;
             }
@@ -235,7 +238,6 @@ bool codeParse::parseLcdInit(QString data)
                 }
                 else
                 {
-               //     qDebug()<<"lcd write para setting error";
                     emit Info("Error:lcd write para setting error")  ;
                     return false;
                 }
@@ -250,7 +252,7 @@ bool codeParse::parseLcdInit(QString data)
             QStringList sList=s.split(" ",QString::SkipEmptyParts);
             if(sList.size()!=2)
             {
-               // qDebug()<<"lcd read para setting error";
+                // qDebug()<<"lcd read para setting error";
                 emit Info("Error:lcd read para setting error")  ;
                 return false;
             }
@@ -269,7 +271,7 @@ bool codeParse::parseLcdInit(QString data)
                 }
                 else
                 {
-                 //   qDebug()<<"lcd read para setting error";
+                    //   qDebug()<<"lcd read para setting error";
                     emit Info("Error:lcd read para setting error")  ;
                     return false;
                 }
@@ -297,7 +299,7 @@ bool codeParse::parseLcdInit(QString data)
             }
             else
             {
-               // qDebug()<<"lcd delay para setting error";
+                // qDebug()<<"lcd delay para setting error";
                 emit Info("Error:lcd delay para setting error");
                 return false;
             }
@@ -315,13 +317,13 @@ bool codeParse::parseLcdInit(QString data)
 
 bool codeParse::parseMipi(QString data)
 {
-     bool ok;
-     QRegExp rxDec("\\d+");
-     QRegExp rxHex("0x[0-9A-Fa-f]+");
-     QRegExp rxLaneDec("MIPI lane:\\s*[1-4]\\s*");
-     QRegExp rxSpeedDec("MIPI speed:\\s*\\d+\\s*Mbps\\s*");
-     QRegExp rxLaneHex("MIPI lane:\\s*0x[1-4]\\s*");
-     QRegExp rxSpeedHex("MIPI speed:\\s*0x[0-9A-Fa-f]+\\s*Mbps\\s*");
+    bool ok;
+    QRegExp rxDec("\\d+");
+    QRegExp rxHex("0x[0-9A-Fa-f]+");
+    QRegExp rxLaneDec("MIPI lane:\\s*[1-4]\\s*");
+    QRegExp rxSpeedDec("MIPI speed:\\s*\\d+\\s*Mbps\\s*");
+    QRegExp rxLaneHex("MIPI lane:\\s*0x[1-4]\\s*");
+    QRegExp rxSpeedHex("MIPI speed:\\s*0x[0-9A-Fa-f]+\\s*Mbps\\s*");
     data.replace(QRegExp("\n\n+"),"\n");
     QStringList strList=data.split("\n",QString::SkipEmptyParts);
     mipiLane=0;
@@ -363,8 +365,8 @@ bool codeParse::parseMipi(QString data)
     }
     else
     {
-       // qDebug()<<"mipiLane"<<mipiLane;
-       // qDebug()<<"mipiSpeed"<<mipiSpeed;
+        // qDebug()<<"mipiLane"<<mipiLane;
+        // qDebug()<<"mipiSpeed"<<mipiSpeed;
         return true;
     }
 }
@@ -388,7 +390,7 @@ bool codeParse::parsePattern(QString data)
             }
             else
             {
-               // qDebug()<<"pattern setting error nothing";
+                // qDebug()<<"pattern setting error nothing";
                 emit Info("Error:pattern setting error");
                 return false;
             }
@@ -403,7 +405,7 @@ bool codeParse::parsePattern(QString data)
             pattern<<(p&0xff);
             if(ok==false)
             {
-              //  qDebug()<<"stay setting error";
+                //  qDebug()<<"stay setting error";
                 emit Info("Error:pattern setting error");
                 return false;
             }
@@ -423,14 +425,28 @@ bool codeParse::parsePattern(QString data)
             pattern<<0x55<<0x55;
         }
     }
-   // qDebug()<<hex<<pattern;
+    // qDebug()<<hex<<pattern;
     return true;
 }
 
 bool codeParse::parseAutoRun(QString data)
 {
-    Q_UNUSED(data);
-    return true;
+    if(data.isEmpty())
+        return false;
+    data.remove("\n");
+    data.remove(QRegExp("\\s+"));
+    if(data == "NO")
+    {
+        autoRun=0;
+        return true;
+    }
+    else if (data == "YES")
+    {
+autoRun=1;
+        return true;
+    }
+    return false;
+
 }
 
 void codeParse::updateStr(QString &str)
@@ -443,7 +459,7 @@ bool codeParse::compile()
     QString str=strToParse;
     if(str.isEmpty())
     {
-       // qDebug()<<"empity";
+        // qDebug()<<"empity";
         emit Info("Error:code is empity");
         return false;
     }
@@ -455,7 +471,7 @@ bool codeParse::compile()
     QStringList data;
     segments=str.split(QRegExp("\\["));//按标题[分割
     segments.removeFirst();//第一个是"["之前的内容，移除
-   // qDebug()<<segments.size();
+    // qDebug()<<segments.size();
 
     foreach(QString s,segments)
     {
@@ -469,71 +485,71 @@ bool codeParse::compile()
             data<<s.section("]\n",1,1);//提取段落中的内容
         }
     }
-           //qDebug()<<title.size()<<data.size();
+    //qDebug()<<title.size()<<data.size();
 
     int i0=0;
     bool result[10];
     for(int i=0;i<10;i++)
         result[i]=false;
-//根据title选择不同的解析函数
+    //根据title选择不同的解析函数
     foreach(QString s,title)
     {
 
         switch(titleStr.indexOf(QRegExp(s)))
         {
-            case 0:
+        case 0:
             //qDebug()<<data[i0];
-          //  qDebug()<<"find project Name";
+            //  qDebug()<<"find project Name";
             emit Info("Info:find project Name");
             result[0]=parseProjectName(data[i0]);
             break;
 
-            case 1:
+        case 1:
             // qDebug()<<data[i0];
-           // qDebug()<<"find power";
+            // qDebug()<<"find power";
             emit Info("Info:find power");
             result[1]=parsePower(data[i0]);
             break;
 
-            case 2:
+        case 2:
             // qDebug()<<data[i0];
-           // qDebug()<<"find backlight";
+            // qDebug()<<"find backlight";
             emit Info("Info:find backlight");
             result[2]=parseBacklight(data[i0]);
             break;
 
-            case 3:
-           // qDebug()<<"find lcd parameter";
+        case 3:
+            // qDebug()<<"find lcd parameter";
             emit Info("Info:find lcd parameter");
             result[3]=parseLcdPara(data[i0]);
             break;
 
-            case 4:
-           // qDebug()<<"MIPI setting";
+        case 4:
+            // qDebug()<<"MIPI setting";
             emit Info("Info:find mipi setting");
             result[4]= parseMipi(data[i0]);
             break;
 
-            case 5:
-           // qDebug()<<"LCD initial code";
+        case 5:
+            // qDebug()<<"LCD initial code";
             emit Info("Info:find lcd intial");
             result[5]=parseLcdInit(data[i0]);
             break;
 
-            case 6:
-           // qDebug()<<"pattern";
+        case 6:
+            // qDebug()<<"pattern";
             emit Info("Info:find pattern setting");
             result[6]=parsePattern(data[i0]);
             break;
 
-            case 7:
+        case 7:
             result[7]= parseAutoRun(data[i0]);
             emit Info("Info:find auto run setting");
-           //qDebug()<<"auto run";
+            //qDebug()<<"auto run";
             break;
 
-            default:
-          //  qDebug()<<"error title";
+        default:
+            //  qDebug()<<"error title";
             break;
         }
 
@@ -544,7 +560,7 @@ bool codeParse::compile()
     {
         if(result[i]==false)
         {
-          //  qDebug()<<"Error:compile failed";
+            //  qDebug()<<"Error:compile failed";
             emit Info("Error:compile failed");
             return false;
         }
@@ -601,6 +617,9 @@ bool codeParse::compile()
         para<<l;
     }
     para<<0x55<<0x55;
+
+    //pattern auto run
+    para<<0xAA<<0xAA<<AUTO_RUN<<autoRun<<0x55<<0x55;
 
     //lcd intial end
     para<<0xAA<<0xAA<<RE_INIT_END<<0x55<<0x55;

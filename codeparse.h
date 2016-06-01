@@ -12,7 +12,8 @@ typedef enum
     LCD_INIT,//初始化lcd
     MIPI_PARA,//初始化SSD2828
     PATTERN,//初始化pattern
-    PROJECT_NAME,
+    PROJECT_NAME, // 项目名称
+    AUTO_RUN, //自动切换画面
     RE_INIT_END,//重新初始化结束
     LCD_READ,//回读LCD寄存器，高速
     LCD_WRITE,//写LCD寄存器，高速模式
@@ -38,7 +39,7 @@ private:
     uint power;
     uint backlight;
     uint mipiLane,mipiSpeed;
-
+    quint8 autoRun;
     QList<quint16> lcdPara;
     QList<quint8> lcdInitPara;
     QList<quint8> pattern;
