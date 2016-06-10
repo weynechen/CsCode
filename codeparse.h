@@ -71,6 +71,9 @@ private:
         FLICKERH,
         COLORBARV,
         COLORBARH,
+        GRAYLEVEL_V,
+        GRAYLEVEL_H,
+        CROSSTALK,
         PIC,
         PATTERN_STAY,
         PATTERN_END

@@ -31,7 +31,12 @@ void CodeEditor::keyPressEvent(QKeyEvent *e)
             QPlainTextEdit::keyPressEvent(e);
 }
 
-
+/*!
+  * @brief
+  * @note
+  * @param
+  * @retval : line number;
+  */
 int CodeEditor::lineNumberAreaWidth()
 {
     int digits = 1;

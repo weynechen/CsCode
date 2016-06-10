@@ -424,6 +424,40 @@ bool codeParse::parsePattern(QString data)
             }
             pattern<<0x55<<0x55;
         }
+
+        if(s.contains(QRegExp("^horizontol colorbar\\s*")))
+        {
+            pattern<<0xAA<<0xAA<<COLORBARH;
+            pattern<<0x55<<0x55;
+        }
+
+        if(s.contains(QRegExp("^vertical colorbar\\s*")))
+        {
+            pattern<<0xAA<<0xAA<<COLORBARV;
+            pattern<<0x55<<0x55;
+        }
+
+        if(s.contains(QRegExp("^flicker\\s*")))
+        {
+            pattern<<0xAA<<0xAA<<FLICKERH;
+            pattern<<0x55<<0x55;
+        }
+
+        if(s.contains(QRegExp("^vertical gray level\\s*")))
+        {
+            pattern<<0xAA<<0xAA<<GRAYLEVEL_V;
+            pattern<<0x55<<0x55;
+        }
+        if(s.contains(QRegExp("^horizontol gray level\\s*")))
+        {
+            pattern<<0xAA<<0xAA<<GRAYLEVEL_H;
+            pattern<<0x55<<0x55;
+        }
+        if(s.contains(QRegExp("^crosstalk\\s*")))
+        {
+            pattern<<0xAA<<0xAA<<CROSSTALK;
+            pattern<<0x55<<0x55;
+        }
     }
     // qDebug()<<hex<<pattern;
     return true;
