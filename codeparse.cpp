@@ -458,6 +458,19 @@ bool codeParse::parsePattern(QString data)
             pattern<<0xAA<<0xAA<<CROSSTALK;
             pattern<<0x55<<0x55;
         }
+        if(s.contains(QRegExp("^null pattern\\s*")))
+        {
+            pattern<<0xAA<<0xAA<<NULL_PATTERN;
+            pattern<<0x55<<0x55;
+
+            if(pattern.size()!=5)
+            {
+                emit Info(QStringLiteral("Error:请把null pattern 放在第一个"));
+                return false;
+            }
+            else
+                true;
+        }
     }
     // qDebug()<<hex<<pattern;
     return true;

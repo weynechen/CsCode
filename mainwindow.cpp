@@ -40,14 +40,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //添加串口设置界面
     serialSettingDialog = new SettingsDialog(this);
-    //添加串口
-    serial = new QSerialPort(this);
-    connect(ui->actionOpenSerial,SIGNAL(triggered(bool)),serialSettingDialog,SLOT(show()));
-    connect(serialSettingDialog,SIGNAL(comReady()),this,SLOT(openSerialPort()));
-    connect(serial, SIGNAL(readyRead()), this, SLOT(readData()));
-    connect(serial, SIGNAL(error(QSerialPort::SerialPortError)), this,
-        SLOT(handleError(QSerialPort::SerialPortError)));
-
 
     //添加消息显示区
     msg= new msgEdit(this);
@@ -72,10 +64,10 @@ MainWindow::MainWindow(QWidget *parent) :
     commandLayout->setMargin(0);
     commandLayout->addWidget(command);
     commandList<<command_type("help",&MainWindow::help)
-          <<command_type("clear",&MainWindow::clearCmd);
+              <<command_type("clear",&MainWindow::clearCmd)
+             <<command_type("pattern",&MainWindow::setPattern);
 
     connect(command,SIGNAL(command(QString)),this,SLOT(parseCommand(QString)));
-
 
     //添加工具栏按钮
     ui->toolBar->addAction(ui->actionOpenFile);
@@ -89,8 +81,17 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->toolBar->addAction(ui->actionDownload);
     ui->toolBar->addAction(ui->actionFlash);
 
+
+    //添加串口
+    serial = new QSerialPort(this);
+    connect(ui->actionOpenSerial,SIGNAL(triggered(bool)),serialSettingDialog,SLOT(show()));
+    connect(serialSettingDialog,SIGNAL(comReady()),this,SLOT(openSerialPort()));
+    connect(serial, SIGNAL(readyRead()), this, SLOT(readData()));
+    connect(serial, SIGNAL(error(QSerialPort::SerialPortError)), this,
+            SLOT(handleError(QSerialPort::SerialPortError)));
+
     //菜单信号槽
-    connect(ui->actionOpenFile,SIGNAL(triggered(bool)),this,SLOT(fileOpen()));
+    connect(ui->actionOpenFile,SIGNAL(triggered(bool)),this,SLOT(fileOpenWithDialog(bool)));
     connect(ui->actionSaveFile,SIGNAL(triggered(bool)),this,SLOT(fileSave()));
     connect(ui->actionSaveAs,SIGNAL(triggered(bool)),this,SLOT(fileSaveAs()));
     connect(ui->actionExit,SIGNAL(triggered(bool)),this,SLOT(close()));
@@ -98,6 +99,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionCloseSerial,SIGNAL(triggered(bool)),this,SLOT(closeSerialPort()));
     connect(ui->actionDownload,SIGNAL(triggered(bool)),this,SLOT(download()));
     connect(ui->actionFlash,SIGNAL(triggered(bool)),this,SLOT(flash()));
+    connect(ui->actionVersion,SIGNAL(triggered(bool)),this,SLOT(showVersion()));
+    connect(ui->actionContactUs,SIGNAL(triggered(bool)),this,SLOT(contactUs()));
 
     //文本改变，使能保存按钮
     connect(codeEdit,SIGNAL(textChanged()),this,SLOT(enableFileSave()));
@@ -115,26 +118,17 @@ MainWindow::MainWindow(QWidget *parent) :
     //恢复用户布局
     QSettings settings("appLayout.ini",QSettings::IniFormat);
     bool flag= ui->splitter->restoreState(settings.value("horizantalLayout").toByteArray());
-    //qDebug()<<flag;
     flag= ui->splitter_2->restoreState(settings.value("verticalLayout").toByteArray());
-    // qDebug()<<flag;
-
     this->resize(settings.value("windowSize",var).toSize());
-    //qDebug()<<flag;
-
+    //恢复上次打开的文件
+    savedFilePath =  settings.value("filePath").toString();
+    loadFile();
 }
 
 MainWindow::~MainWindow()
 {
-
-    QSettings settings("appLayout.ini",QSettings::IniFormat);
-    settings.setValue("horizantalLayout",ui->splitter->saveState());
-    settings.setValue("verticalLayout",ui->splitter_2->saveState());
-    settings.setValue("windowSize",this->size());
     delete ui;
 }
-
-
 
 void MainWindow::closeSerialPort()
 {
@@ -156,8 +150,8 @@ void MainWindow::download()
     }
     if (serial->isOpen())
     {
-      serial->write(parse->dataToSerial);
-      isDownloadDone=true;
+        serial->write(parse->dataToSerial);
+        isDownloadDone=true;
     }
     else
     {
@@ -186,13 +180,41 @@ void MainWindow::flash()
     serial->write(ba);
 }
 
+void MainWindow::showVersion()
+{
+    QMessageBox::about(this,"verison",QStringLiteral("当前版本\nV1.1.0"));
+}
+
+void MainWindow::contactUs()
+{
+    QMessageBox::information(this,QStringLiteral("联系我们"),QStringLiteral("请发送邮件至\ncoolsaven@coolsaven.com\n或者访问我们的网站\nwww.coolsaven.com\n获取更多帮助"));
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    Q_UNUSED(event);
+
+    //存储布局
+    QSettings settings("appLayout.ini",QSettings::IniFormat);
+    settings.setValue("horizantalLayout",ui->splitter->saveState());
+    settings.setValue("verticalLayout",ui->splitter_2->saveState());
+    settings.setValue("windowSize",this->size());
+    settings.setValue("filePath",savedFilePath);
+
+    //存储未保存的数据
+    if(isFileSaved == false)
+    {
+        if(QMessageBox::question(this,"save file",QStringLiteral("文件未保存\n需要保存吗？"))== QMessageBox::Yes)
+        {
+            fileSave();
+        }
+    }
+}
 
 void MainWindow::handleError(QSerialPort::SerialPortError error)
 {
-
-
     if (error == QSerialPort::ResourceError) {
-                closeSerialPort();
+        closeSerialPort();
         QPalette pS;
         pS.setColor(QPalette::WindowText,Qt::darkRed);
         status->setPalette(pS);
@@ -201,11 +223,13 @@ void MainWindow::handleError(QSerialPort::SerialPortError error)
 
 }
 
-
 void MainWindow::openSerialPort()
 {
-    if(serial->isOpen())
+    if (serial->isOpen())
+    {
+        disconnect(serial, SIGNAL(readyRead()), this, SLOT(readData()));
         serial->close();
+    }
 
     SettingsDialog::Settings p = serialSettingDialog->settings();
     serial->setPortName(p.name);
@@ -220,8 +244,8 @@ void MainWindow::openSerialPort()
 
     if (serial->open(QIODevice::ReadWrite)) {
         status->setText(tr("Connected to %1 : %2, %3, %4, %5, %6")
-                          .arg(p.name).arg(p.stringBaudRate).arg(p.stringDataBits)
-                          .arg(p.stringParity).arg(p.stringStopBits).arg(p.stringFlowControl));
+                        .arg(p.name).arg(p.stringBaudRate).arg(p.stringDataBits)
+                        .arg(p.stringParity).arg(p.stringStopBits).arg(p.stringFlowControl));
     } else {
         QMessageBox::critical(this, tr("Error"), serial->errorString());
 
@@ -251,15 +275,39 @@ void MainWindow::help(QString)
                 );
 }
 
+void MainWindow::setPattern(QString s)
+{
+    if (!serial->isOpen())
+    {
+        msg->appendPlainText("Error:Please open serial port first");
+        return;
+    }
+    bool ok=false;
+    quint8 frame=0;
+    s.remove(QRegExp("\\s"));
+    QRegExp rx("pattern=(.*)");
+    if(s.indexOf(rx)!=-1)
+    {
 
-bool MainWindow::saveFile(const QString &fileName)
+        frame=rx.cap(1).toInt(&ok,0);
+    }
+    if(ok)
+    {
+        const quint8 a[]={0xAA,0xAA,CHOOSE_FRAME,frame,0x55,0x55};
+        QByteArray ba((char*)a,6);
+        serial->write(ba);
+    }
+
+}
+
+bool MainWindow::saveToFile(const QString &fileName)
 {
     QFile file(fileName);
     if(!file.open(QFile::WriteOnly|QFile::Text))
     {
         QMessageBox::critical(this,
                               "critical",
-                              "cannot write file"
+                              QStringLiteral("文件禁止写入")
                               );
         return false;
     }
@@ -267,31 +315,25 @@ bool MainWindow::saveFile(const QString &fileName)
     {
         QTextStream out(&file);
         out<<codeEdit->toPlainText();
-       // setCurrentFile(fileName);
+        isFileSaved =true;
         return true;
     }
 }
 
-
-
-
-
-void MainWindow::fileOpen()
+void MainWindow::loadFile()
 {
-    QString fileName=QFileDialog::getOpenFileName(
-                this,
-                "Open file",
-                ".",
-                "cool saven file(*.csc);;All file(*.*)"
-                );
-    if(fileName.isEmpty())
+    if(savedFilePath.isEmpty())
     {
         return;
     }
 
-    savedFilePath=fileName;
-
-    QFile TextFile(fileName);
+    QRegExp rx("[^\\n]*.csc");
+    if(rx.exactMatch(savedFilePath) == false)
+    {
+        return;
+    }
+    this->setWindowTitle("CS Code --  "+savedFilePath);
+    QFile TextFile(savedFilePath);
 
     if(!TextFile.open(QIODevice::ReadOnly))
     {
@@ -299,25 +341,66 @@ void MainWindow::fileOpen()
         return;
     }
 
+    disconnect(codeEdit,SIGNAL(textChanged()),this,SLOT(enableFileSave()));
     QTextStream ts(&TextFile);
     codeEdit->setPlainText(ts.readAll());
+    connect(codeEdit,SIGNAL(textChanged()),this,SLOT(enableFileSave()));
+
+}
+
+void MainWindow::fileOpenWithDialog(bool)
+{
+    if(isFileSaved == false)
+    {
+        if(QMessageBox::question(this,"save file",QStringLiteral("文件未保存\n需要保存吗？"))== QMessageBox::Yes)
+        {
+            fileSave();
+        }
+    }
+
+        QString fileName=QFileDialog::getOpenFileName(
+                    this,
+                    "Open file",
+                    ".",
+                    "cool saven file(*.csc);;All file(*.*)"
+                    );
+        if(fileName.isEmpty())
+        {
+            return;
+        }
+
+    savedFilePath=fileName;
+    this->setWindowTitle("CS Code  --  "+savedFilePath);
+
+    QFile TextFile(savedFilePath);
+
+    if(!TextFile.open(QIODevice::ReadOnly))
+    {
+        QMessageBox::warning(this,"Open error","Text file open failed!");
+        return;
+    }
+
+    disconnect(codeEdit,SIGNAL(textChanged()),this,SLOT(enableFileSave()));
+    QTextStream ts(&TextFile);
+    codeEdit->setPlainText(ts.readAll());
+    connect(codeEdit,SIGNAL(textChanged()),this,SLOT(enableFileSave()));
 }
 
 void MainWindow::fileSave()
 {
     if(savedFilePath.isEmpty())
         savedFilePath=QFileDialog::getSaveFileName(this,
-                                                      QStringLiteral("保存"),
-                                                       ".",
-                                                      "cool saven file(*.csc)"
-                                                      );
+                                                   QStringLiteral("保存"),
+                                                   ".",
+                                                   "cool saven file(*.csc)"
+                                                   );
     if(savedFilePath.isEmpty())
     {
         return;
     }
     else
     {
-        saveFile(savedFilePath);
+        saveToFile(savedFilePath);
     }
 
     ui->actionSaveFile->setEnabled(false);
@@ -338,8 +421,11 @@ void MainWindow::fileSaveAs()
     }
     else
     {
-        saveFile(fileName);
+        saveToFile(fileName);
+        savedFilePath = fileName;
+        this->setWindowTitle("CS Code  --  "+savedFilePath);
     }
+
 }
 
 void MainWindow::enableFileSave()
@@ -361,7 +447,7 @@ void MainWindow::enableFileSave()
         {
             ui->actionSaveFile->setEnabled(true);
             this->setWindowTitle("*CS Code --  "+savedFilePath);
-
+            isFileSaved = false;
         }
     }
 }
@@ -386,7 +472,7 @@ void MainWindow::parseCommand(QString str)
 
         }
 
-    command->appendPlainText("Error:invaild command");
+        command->appendPlainText("Error:invalid command-->"+str);
     }
 }
 

@@ -76,6 +76,7 @@ private:
         CROSSTALK,
         PIC,
         PATTERN_STAY,
+        NULL_PATTERN,
         PATTERN_END
     }pattern_type;
 

@@ -28,7 +28,7 @@ public:
 
     void clearCmd(QString);
     void help(QString);
-
+    void setPattern(QString s);
 
 private:
     Ui::MainWindow *ui;
@@ -51,11 +51,12 @@ private:
     QVBoxLayout *msgLayout;
 
     SettingsDialog *serialSettingDialog;
-    bool saveFile(const QString &fileName);
+    bool saveToFile(const QString &fileName);
     bool isDownloadDone=false;
-
+    bool isFileSaved = true;
+    void loadFile();
 private slots:
-    void fileOpen();
+    void fileOpenWithDialog(bool);
     void fileSave();
     void fileSaveAs();
     void enableFileSave();
@@ -67,6 +68,10 @@ private slots:
     void closeSerialPort();
     void download();
     void flash();
+    void showVersion();
+    void contactUs();
+protected:
+     void closeEvent(QCloseEvent *event);
 };
 
 
