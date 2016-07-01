@@ -11,5 +11,6 @@
         <file>images/compile.png</file>
         <file>images/burn.png</file>
         <file>images/code.png</file>
+        <file>images/new.png</file>
     </qresource>
 </RCC>

@@ -11,6 +11,7 @@
 #include "msgedit.h"
 #include "settingsdialog.h"
 #include "QLabel"
+#include "imagetobindialog.h"
 
 namespace Ui {
 class MainWindow;
@@ -49,12 +50,14 @@ private:
     QLabel *author;
     msgEdit *msg;
     QVBoxLayout *msgLayout;
+    ImageToBinDialog *imageToBin;
 
     SettingsDialog *serialSettingDialog;
     bool saveToFile(const QString &fileName);
     bool isDownloadDone=false;
     bool isFileSaved = true;
     void loadFile();
+
 private slots:
     void fileOpenWithDialog(bool);
     void fileSave();
@@ -70,6 +73,9 @@ private slots:
     void flash();
     void showVersion();
     void contactUs();
+    void ImageToBin();
+    void fileNew();
+
 protected:
      void closeEvent(QCloseEvent *event);
 };

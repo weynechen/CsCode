@@ -21,7 +21,8 @@ SOURCES += main.cpp\
     msgedit.cpp \
     commandhlighter.cpp \
     msghlighter.cpp \
-    settingsdialog.cpp
+    settingsdialog.cpp \
+    imagetobindialog.cpp
 
 HEADERS  += mainwindow.h \
     commandedit.h \
@@ -31,10 +32,12 @@ HEADERS  += mainwindow.h \
     msgedit.h \
     commandhlighter.h \
     msghlighter.h \
-    settingsdialog.h
+    settingsdialog.h \
+    imagetobindialog.h
 
 FORMS    += mainwindow.ui \
-    settingsdialog.ui
+    settingsdialog.ui \
+    imagetobindialog.ui
 
 RESOURCES += \
     qrc.qrc

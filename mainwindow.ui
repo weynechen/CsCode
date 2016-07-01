@@ -106,6 +106,7 @@ background-color: rgb(235, 243, 255);
     <property name="title">
      <string>文件(F)</string>
     </property>
+    <addaction name="actionNew"/>
     <addaction name="actionOpenFile"/>
     <addaction name="actionSaveFile"/>
     <addaction name="actionSaveAs"/>
@@ -117,8 +118,8 @@ background-color: rgb(235, 243, 255);
     </property>
     <addaction name="actionHighlightKeyWords"/>
     <addaction name="actionFont"/>
-    <addaction name="actionComment_2"/>
-    <addaction name="actionUncomment_2"/>
+    <addaction name="actioncomment_"/>
+    <addaction name="actionUncomment_"/>
    </widget>
    <widget class="QMenu" name="menu_3">
     <property name="title">
@@ -319,14 +320,23 @@ background-color: rgb(235, 243, 255);
     <string>uncomment</string>
    </property>
   </action>
-  <action name="actionComment_2">
+  <action name="actioncomment_">
    <property name="text">
     <string>注释选择</string>
    </property>
   </action>
-  <action name="actionUncomment_2">
+  <action name="actionUncomment_">
    <property name="text">
     <string>去掉注释</string>
+   </property>
+  </action>
+  <action name="actionNew">
+   <property name="icon">
+    <iconset resource="qrc.qrc">
+     <normaloff>:/new/prefix1/images/new.png</normaloff>:/new/prefix1/images/new.png</iconset>
+   </property>
+   <property name="text">
+    <string>新建</string>
    </property>
   </action>
  </widget>
