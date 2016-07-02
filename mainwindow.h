@@ -51,11 +51,11 @@ private:
     msgEdit *msg;
     QVBoxLayout *msgLayout;
     ImageToBinDialog *imageToBin;
-
+    QString imagePath;
     SettingsDialog *serialSettingDialog;
     bool saveToFile(const QString &fileName);
-    bool isDownloadDone=false;
-    bool isFileSaved = true;
+    bool isDownloadDone;
+    bool isFileSaved;
     void loadFile();
 
 private slots:

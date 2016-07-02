@@ -27,7 +27,7 @@ class codeParse:public QObject
 
 private:
 
-    const uint maxCurrent=100;
+    const uint maxCurrent;
 
     QString strToParse;
     QStringList titleStr;
@@ -75,6 +75,7 @@ private:
         GRAYLEVEL_H,
         CROSSTALK,
         PIC,
+        FRAME,
         PATTERN_STAY,
         NULL_PATTERN,
         PATTERN_END

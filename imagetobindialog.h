@@ -2,7 +2,7 @@
 #define IMAGETOBINDIALOG_H
 
 #include <QDialog>
-
+#include "QVBoxLayout"
 namespace Ui {
 class ImageToBinDialog;
 }
@@ -12,8 +12,13 @@ class plotArea:public QWidget
     Q_OBJECT
 public:
     explicit plotArea(QWidget *parent);
+    QImage *Image;
+
 protected:
     void paintEvent(QPaintEvent *);
+    void wheelEvent(QWheelEvent *event);
+private:
+    double mRangZoom;
 };
 
 class ImageToBinDialog : public QDialog
@@ -27,11 +32,14 @@ public:
 
 private:
     Ui::ImageToBinDialog *ui;
-    QImage *Image;
     plotArea *plot;
-protected:
-    void paintEvent(QPaintEvent *);
+    QVBoxLayout *plotLayout;
+    QString imagePath;
 
+protected:
+    void resizeEvent(QResizeEvent * event);
+private slots:
+    void on_pushButton_clicked();
 };
 
 #endif // IMAGETOBINDIALOG_H

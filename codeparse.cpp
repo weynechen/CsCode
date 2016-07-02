@@ -1,7 +1,7 @@
 ﻿#include "codeparse.h"
 #include <QDebug>
 #include "QTextStream"
-codeParse::codeParse(QObject *parent):QObject(parent),power(0),backlight(0)
+codeParse::codeParse(QObject *parent):QObject(parent),power(0),backlight(0),maxCurrent(150)
 {
     titleStr<<"project name"<<"power"<<"backlight"<<"LCD parameter"<<"MIPI setting"<<"LCD initial code"<<"pattern"<<"auto run";
     powerStr<<"1.8V"<<"2.8V"<<"3.3V"<<"5V"<<"-5V";
@@ -428,6 +428,12 @@ bool codeParse::parsePattern(QString data)
         if(s.contains(QRegExp("^horizontol colorbar\\s*")))
         {
             pattern<<0xAA<<0xAA<<COLORBARH;
+            pattern<<0x55<<0x55;
+        }
+
+        if(s.contains(QRegExp("^frame\\s*")))
+        {
+            pattern<<0xAA<<0xAA<<FRAME;
             pattern<<0x55<<0x55;
         }
 
