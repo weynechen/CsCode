@@ -516,7 +516,8 @@ bool codeParse::compile()
         emit Info("Error:code is empity");
         return false;
     }
-    //删除所有注释--删除正则表达式 "//[^\n]*" 标注的所有string
+    //删除所有注释
+    str.remove(QRegExp("/\\*[^\\*]*[^/]*\\*/"));
     str.remove(QRegExp("//[^\n]*"));
     //分割title和para
     QStringList segments;
@@ -684,7 +685,7 @@ bool codeParse::compile()
     }
 
 
-    emit Info("OK:compile success");
+    emit Info("OK:compile success\n");
     return true;
 }
 

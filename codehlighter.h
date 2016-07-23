@@ -25,9 +25,15 @@ private:
     QRegExp TitleStartExpression;
     QRegExp TitleEndExpression;
 
+    QTextCharFormat blockComments;
+    QRegExp blockCommentsStartExpression;
+    QRegExp blockCommentsEndExpression;
+
     highligherRules hexNum;
     highligherRules decNum;
     highligherRules lineComment;
+    highligherRules title;
+    highligherRules atSymbol;
 
 protected:
     void highlightBlock(const QString &text);
