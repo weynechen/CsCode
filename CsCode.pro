@@ -22,7 +22,8 @@ SOURCES += main.cpp\
     commandhlighter.cpp \
     msghlighter.cpp \
     settingsdialog.cpp \
-    imagetobindialog.cpp
+    imagetobindialog.cpp \
+    updateconfig.cpp
 
 HEADERS  += mainwindow.h \
     commandedit.h \
@@ -33,11 +34,13 @@ HEADERS  += mainwindow.h \
     commandhlighter.h \
     msghlighter.h \
     settingsdialog.h \
-    imagetobindialog.h
+    imagetobindialog.h \
+    updateconfig.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \
-    imagetobindialog.ui
+    imagetobindialog.ui \
+    updateconfig.ui
 
 RESOURCES += \
     qrc.qrc

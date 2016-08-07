@@ -9,6 +9,7 @@
 #include <QMessageBox>
 #include <QTextStream> //文本流输入输出
 
+
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent), ui(new Ui::MainWindow),isDownloadDone(false),isFileSaved(true) {
     ui->setupUi(this);
@@ -90,6 +91,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(serial, SIGNAL(error(QSerialPort::SerialPortError)), this,
         SLOT(handleError(QSerialPort::SerialPortError)));
 
+    //初始化更新配置文件窗口
+    mUpdateConfig = new updateConfig(this);
+
     //菜单信号槽
     connect(ui->actionOpenFile, SIGNAL(triggered(bool)), this,
         SLOT(fileOpenWithDialog(bool)));
@@ -110,6 +114,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionNew, SIGNAL(triggered(bool)), this, SLOT(fileNew()));
     //文本改变，使能保存按钮
     connect(codeEdit, SIGNAL(textChanged()), this, SLOT(enableFileSave()));
+    connect(ui->actionBurnConfig, SIGNAL(triggered(bool)), mUpdateConfig, SLOT(show()));
+    connect(mUpdateConfig,SIGNAL(updateConfigReady()),this,SLOT(burnConfig()));
 
     //刚开始禁用保存
     ui->actionSaveFile->setEnabled(false);
@@ -118,16 +124,18 @@ MainWindow::MainWindow(QWidget *parent)
     ui->actionFont->setEnabled(false);
     ui->actionHighlightKeyWords->setEnabled(false);
 
+
     //设置窗口默认大小为电脑屏幕大小的3/4
     const QSize availableSize = QApplication::desktop()->availableGeometry(this).size();
     QVariant var(availableSize / 4 * 3);
 
     //恢复用户布局
-    QSettings settings("appLayout.ini", QSettings::IniFormat);
+    QSettings settings("CsCode.ini", QSettings::IniFormat);
     bool flag = ui->splitter->restoreState(settings.value("horizantalLayout").toByteArray());
     flag = ui->splitter_2->restoreState(settings.value("verticalLayout").toByteArray());
     this->resize(settings.value("windowSize", var).toSize());
     //恢复上次打开的文件
+    mUpdateConfig->configFilePath = settings.value("configFilePath").toString();
     savedFilePath = settings.value("filePath").toString();
     imagePath = settings.value("imagePath").toString();
     loadFile();
@@ -177,7 +185,7 @@ void MainWindow::flash() {
 }
 
 void MainWindow::showVersion() {
-    QMessageBox::about(this, "verison", QStringLiteral("当前版本\nV1.1.0"));
+    QMessageBox::about(this, "verison", QStringLiteral("当前版本\nV1.2.0"));
 }
 
 void MainWindow::contactUs() {
@@ -211,16 +219,34 @@ void MainWindow::fileNew() {
     codeEdit->clear();
 }
 
+void MainWindow::burnConfig()
+{
+
+    if (!serial->isOpen()) {
+        msg->appendPlainText("Error:Please open serial port first");
+        return;
+    }
+
+    char a[] = {0xAA,0xAA,FLASH_CONFIG,0x55,0x55};
+    QByteArray data(a,5);
+    data.prepend(mUpdateConfig->configData);
+
+    serial->write(data);
+}
+
 void MainWindow::closeEvent(QCloseEvent *event) {
     Q_UNUSED(event);
 
     //存储布局
-    QSettings settings("appLayout.ini", QSettings::IniFormat);
+    QSettings settings("CsCode.ini", QSettings::IniFormat);
     settings.setValue("horizantalLayout", ui->splitter->saveState());
     settings.setValue("verticalLayout", ui->splitter_2->saveState());
     settings.setValue("windowSize", this->size());
+
+    //存储文件路径
     settings.setValue("filePath", savedFilePath);
     settings.setValue("imagePath",imagePath);
+    settings.setValue("configFilePath",mUpdateConfig->configFilePath);
 
     //存储未保存的数据
     if (isFileSaved == false) {
@@ -434,7 +460,23 @@ void MainWindow::enableFileSave() {
 
 void MainWindow::parseCode() {
     parse->updateStr(codeEdit->toPlainText());
-    parse->compile();
+    if(parse->compile() == true)
+    {
+        QString fileName = savedFilePath;
+        fileName.chop(3);
+        fileName += "cfg";
+        QFile file(fileName);
+        if (!file.open(QFile::WriteOnly))
+        {
+            QMessageBox::critical(this, "critical", QStringLiteral("文件禁止写入"));
+            return ;
+        }
+        else
+        {
+            file.write(parse->dataToSerial);
+        }
+
+    }
 }
 
 void MainWindow::parseCommand(QString str) {

@@ -18,7 +18,8 @@ typedef enum
     LCD_READ,//回读LCD寄存器，高速
     LCD_WRITE,//写LCD寄存器，高速模式
     CHOOSE_FRAME,//选择显示的画面
-    TO_FLASH//固化初始化参数到Flash
+    TO_FLASH,//固化初始化参数到Flash
+    FLASH_CONFIG
 }com_id;
 
 class codeParse:public QObject
@@ -76,10 +77,13 @@ private:
         CROSSTALK,
         PIC,
         FRAME,
+        CHESSBOARD,
+        RGBBAR,
+        RGBLEVEL,
         PATTERN_STAY,
         NULL_PATTERN,
         PATTERN_END
-    }pattern_type;
+    } pattern_type;
 
 
 public:
@@ -100,7 +104,7 @@ public:
     void updateStr(QString &str);
     QByteArray dataToSerial;
 
- public slots:
+public slots:
 
 signals:
     void Info(QString str);

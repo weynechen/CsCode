@@ -12,6 +12,7 @@
 #include "settingsdialog.h"
 #include "QLabel"
 #include "imagetobindialog.h"
+#include "updateconfig.h"
 
 namespace Ui {
 class MainWindow;
@@ -53,6 +54,8 @@ private:
     ImageToBinDialog *imageToBin;
     QString imagePath;
     SettingsDialog *serialSettingDialog;
+    updateConfig *mUpdateConfig;
+
     bool saveToFile(const QString &fileName);
     bool isDownloadDone;
     bool isFileSaved;
@@ -75,6 +78,7 @@ private slots:
     void contactUs();
     void ImageToBin();
     void fileNew();
+    void burnConfig();
 
 protected:
      void closeEvent(QCloseEvent *event);

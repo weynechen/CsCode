@@ -5,8 +5,8 @@ codeParse::codeParse(QObject *parent):QObject(parent),power(0),backlight(0),maxC
 {
     titleStr<<"project name"<<"power"<<"backlight"<<"LCD parameter"<<"MIPI setting"<<"LCD initial code"<<"pattern"<<"auto run";
     powerStr<<"1.8V"<<"2.8V"<<"3.3V"<<"5V"<<"-5V";
-    lcdParaStr<<"pix clock"<<"horizontol resolution"<<"vertical resolution"<<"horizontol back porch"
-             <<"horizontol front porch"<<"horizontol sync pulse width"<<"vertical back porch"<<"vertical front porch"
+    lcdParaStr<<"pix clock"<<"horizontal resolution"<<"vertical resolution"<<"horizontal back porch"
+             <<"horizontal front porch"<<"horizontal sync pulse width"<<"vertical back porch"<<"vertical front porch"
             <<"vertical sync pulse width";
     lcdInit<<"package"<<"write"<<"delay"<<"read";
 }
@@ -425,7 +425,7 @@ bool codeParse::parsePattern(QString data)
             pattern<<0x55<<0x55;
         }
 
-        if(s.contains(QRegExp("^horizontol colorbar\\s*")))
+        if(s.contains(QRegExp("^horizontal colorbar\\s*")))
         {
             pattern<<0xAA<<0xAA<<COLORBARH;
             pattern<<0x55<<0x55;
@@ -454,7 +454,7 @@ bool codeParse::parsePattern(QString data)
             pattern<<0xAA<<0xAA<<GRAYLEVEL_V;
             pattern<<0x55<<0x55;
         }
-        if(s.contains(QRegExp("^horizontol gray level\\s*")))
+        if(s.contains(QRegExp("^horizontal gray level\\s*")))
         {
             pattern<<0xAA<<0xAA<<GRAYLEVEL_H;
             pattern<<0x55<<0x55;
@@ -464,6 +464,25 @@ bool codeParse::parsePattern(QString data)
             pattern<<0xAA<<0xAA<<CROSSTALK;
             pattern<<0x55<<0x55;
         }
+
+        if(s.contains(QRegExp("^chessboard\\s*")))
+        {
+            pattern<<0xAA<<0xAA<<CHESSBOARD;
+            pattern<<0x55<<0x55;
+        }
+
+        if(s.contains(QRegExp("^rgbbar\\s*")))
+        {
+            pattern<<0xAA<<0xAA<<RGBBAR;
+            pattern<<0x55<<0x55;
+        }
+
+        if(s.contains(QRegExp("^rgblevel\\s*")))
+        {
+            pattern<<0xAA<<0xAA<<RGBLEVEL;
+            pattern<<0x55<<0x55;
+        }
+
         if(s.contains(QRegExp("^null pattern\\s*")))
         {
             pattern<<0xAA<<0xAA<<NULL_PATTERN;

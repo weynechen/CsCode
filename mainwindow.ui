@@ -150,6 +150,7 @@ background-color: rgb(235, 243, 255);
      <string>工具(T)</string>
     </property>
     <addaction name="actionImageToBin"/>
+    <addaction name="actionBurnConfig"/>
    </widget>
    <addaction name="menu"/>
    <addaction name="menu_2"/>
@@ -337,6 +338,11 @@ background-color: rgb(235, 243, 255);
    </property>
    <property name="text">
     <string>新建</string>
+   </property>
+  </action>
+  <action name="actionBurnConfig">
+   <property name="text">
+    <string>烧录配置</string>
    </property>
   </action>
  </widget>
