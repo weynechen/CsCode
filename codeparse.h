@@ -3,24 +3,59 @@
 #include"QString.h"
 #include "QObject"
 
+
+/**
+ * @brief  系统配置数据长度
+ */
+#define LCD_PARA_LEN       18
+#define LCD_INIT_LEN       3000
+#define PATTERN_LEN        1024
+#define MIPI_CONFIG_LEN    256
+#define MAX_NAME_LEN 128
+
+/**
+ * @brief  系统配置数据结构体，这一部分数据会被烧录到flash
+ */
+typedef struct
+{
+  uint8_t PowerSettings;               /*< 电源设置 */
+  uint8_t Backlight;                   /*< 背光电流设置 */
+  uint8_t LCDTimingPara[LCD_PARA_LEN]; /*< LCD 时序参数设置 */
+  uint8_t LCDInitCode[LCD_INIT_LEN];   /*< LCD 初始化设置 */
+  uint8_t MIPIConfig[MIPI_CONFIG_LEN]; /*< MIPI 参数设置 */
+  uint8_t Pattern[PATTERN_LEN];        /*< pattern 设置 */
+  uint8_t ProjectName[MAX_NAME_LEN];   /*< 项目名称设置 */
+  uint8_t IsAutoRun;                   /*< 是否自动跑 */
+} ConfigTypeDef;
+
+
+
+/**
+ * @brief  接口定义
+ */
 typedef enum
 {
-    RE_INIT_START, //重新初始化开始标志
-    POWER,//初始化电源
-    BACKLIGHT,//初始化背光
-    LCD_PARA,//初始化lcd pclk，前后肩等参数
-    LCD_INIT,//初始化lcd
-    MIPI_PARA,//初始化SSD2828
-    PATTERN,//初始化pattern
-    PROJECT_NAME, // 项目名称
-    AUTO_RUN, //自动切换画面
-    RE_INIT_END,//重新初始化结束
-    LCD_READ,//回读LCD寄存器，高速
-    LCD_WRITE,//写LCD寄存器，高速模式
-    CHOOSE_FRAME,//选择显示的画面
-    TO_FLASH,//固化初始化参数到Flash
-    FLASH_CONFIG
-}com_id;
+    IF_UART1,
+    IF_USB,
+    IF_UART3,
+}InterfaceTypeDef;
+
+
+/**
+ * @brief  操作数据包ID号，同一个数据包只能有一个ACTION.
+ */
+typedef enum
+{
+    RE_INIT_START,     /*< 重新初始化开始标志*/
+    LCD_READ,          /*< 回读LCD寄存器，高速*/
+    LCD_WRITE,         /*< 写LCD寄存器，高速模式*/
+    SET_FRAME,         /*< 选择显示的画面*/
+    FLASH_PARA,        /*< 固化调试好的参数到Flash*/
+    FLASH_CONFIG_FILE, /*< 烧录配置文件 */
+    CHANNEL_SEL,        /*< 选择通道 */
+    UPDATE_FIRMWARE,    /*< 更新固件 */
+    ACTION_NULL = 0xff /*< 空动作*/
+}ActionIDTypeDef;
 
 class codeParse:public QObject
 {
@@ -39,13 +74,16 @@ private:
     QString projectName;
     uint power;
     uint backlight;
-    uint mipiLane,mipiSpeed;
-    quint8 autoRun;
-    QList<quint16> lcdPara;
-    QList<quint8> lcdInitPara;
-    QList<quint8> pattern;
 
-    QList<quint8> para;
+    quint8 autoRun;
+
+    QList<quint8> CompiledPara;
+
+
+
+    ConfigTypeDef SystemConfig;
+
+
 
     typedef enum
     {
