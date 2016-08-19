@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     msghlighter.cpp \
     settingsdialog.cpp \
     imagetobindialog.cpp \
-    updateconfig.cpp
+    updateconfig.cpp \
+    crc.cpp
 
 HEADERS  += mainwindow.h \
     commandedit.h \
@@ -35,7 +36,8 @@ HEADERS  += mainwindow.h \
     msghlighter.h \
     settingsdialog.h \
     imagetobindialog.h \
-    updateconfig.h
+    updateconfig.h \
+    crc.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \

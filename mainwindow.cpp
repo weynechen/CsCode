@@ -179,7 +179,7 @@ void MainWindow::flash() {
         return;
     }
 
-    const quint8 a[] = { 0xAA, 0xAA, TO_FLASH, 0x55, 0x55 };
+    const quint8 a[] = { 0xAA, 0xAA, FLASH_PARA, 0x55, 0x55 };
     QByteArray ba((char *)a);
     serial->write(ba);
 }
@@ -227,7 +227,7 @@ void MainWindow::burnConfig()
         return;
     }
 
-    char a[] = {0xAA,0xAA,FLASH_CONFIG,0x55,0x55};
+    char a[] = {0xAA,0xAA,FLASH_CONFIG_FILE,0x55,0x55};
     QByteArray data(a,5);
     data.prepend(mUpdateConfig->configData);
 
@@ -331,7 +331,7 @@ void MainWindow::setPattern(QString s) {
         frame = rx.cap(1).toInt(&ok, 0);
     }
     if (ok) {
-        const quint8 a[] = { 0xAA, 0xAA, CHOOSE_FRAME, frame, 0x55, 0x55 };
+        const quint8 a[] = { 0xAA, 0xAA, SET_FRAME, frame, 0x55, 0x55 };
         QByteArray ba((char *)a, 6);
         serial->write(ba);
     }

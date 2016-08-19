@@ -1,6 +1,7 @@
 ﻿#include "codeparse.h"
 #include <QDebug>
 #include "QTextStream"
+#include "crc.h"
 codeParse::codeParse(QObject *parent):QObject(parent),power(0),backlight(0),maxCurrent(150)
 {
     titleStr<<"project name"<<"power"<<"backlight"<<"LCD parameter"<<"MIPI setting"<<"LCD initial code"<<"pattern"<<"auto run";
@@ -158,11 +159,11 @@ bool codeParse::parseLcdPara(QString data)
         }
     }
 
-    quint count = 0;
+    quint16 count = 0;
     foreach(quint16 l,lcdPara)
     {
-        SystemConfig.LCDTimingPara[count++]<<(quint8)(l>>8);
-        SystemConfig.LCDTimingPara[count++]<<(quint8)(l&0xff);
+        SystemConfig.LCDTimingPara[count++] = (quint8)(l>>8);
+        SystemConfig.LCDTimingPara[count++] = (quint8)(l&0xff);
 
     }
 
@@ -472,7 +473,7 @@ bool codeParse::parsePattern(QString data)
         {
             pattern<<NULL_PATTERN;
 
-            if(pattern.begin()!=(quint8)NULL_PATTERN)
+            if(pattern[0]=(quint8)NULL_PATTERN)
             {
                 emit Info(QStringLiteral("Error:请把null pattern 放在第一个"));
                 return false;
@@ -623,12 +624,38 @@ bool codeParse::compile()
     CompiledPara<<RE_INIT_START;
 
     //data
-
+    quint8 *p = (quint8 *)&SystemConfig;
+    for(int i = 0 ; i< sizeof(ConfigTypeDef) ; i++)
+    {
+        CompiledPara<<*p++;
+    }
 
     dataToSerial.clear();
 
     foreach (quint8 temp, CompiledPara) {
         dataToSerial.append((char)temp);
+    }
+    qDebug()<<dataToSerial.size();
+    //补齐
+    quint8 lenMod = (dataToSerial.size() + 2) % 4;
+    for(int i=0;i<4-lenMod;i++)
+    {
+        dataToSerial.append(0xff);
+    }
+
+    qDebug()<<dataToSerial.size();
+    //data len
+    quint16 len = dataToSerial.size() + 2;
+    dataToSerial.prepend((char)(len &0xff));
+    dataToSerial.prepend((char)((len >> 8) & 0xff));
+
+    //crc32
+    crc config_crc;
+    quint32 crc32 = config_crc.crctablefast(dataToSerial);
+
+    for(int i = 4 ;i >0 ;i --)
+    {
+        dataToSerial.append((char)(crc32>>(i-1)*8) & 0xff);
     }
 
 
