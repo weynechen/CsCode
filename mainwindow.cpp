@@ -159,7 +159,7 @@ void MainWindow::download() {
         return;
     }
     if (serial->isOpen()) {
-        serial->write(parse->dataToSerial);
+        qDebug()<<serial->write(parse->dataToSerial);
         isDownloadDone = true;
     }
     else {

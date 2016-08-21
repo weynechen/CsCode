@@ -2,6 +2,8 @@
 #include <QDebug>
 #include "QTextStream"
 #include "crc.h"
+#include "QTime"
+
 codeParse::codeParse(QObject *parent):QObject(parent),power(0),backlight(0),maxCurrent(150)
 {
     titleStr<<"project name"<<"power"<<"backlight"<<"LCD parameter"<<"MIPI setting"<<"LCD initial code"<<"pattern"<<"auto run";
@@ -10,6 +12,16 @@ codeParse::codeParse(QObject *parent):QObject(parent),power(0),backlight(0),maxC
              <<"horizontal front porch"<<"horizontal sync pulse width"<<"vertical back porch"<<"vertical front porch"
             <<"vertical sync pulse width";
     lcdInit<<"package"<<"write"<<"delay"<<"read";
+
+    //初始化SystemConfig
+    QTime t;
+    t= QTime::currentTime();
+    qsrand(t.msec()+t.second()*1000);
+    quint8 *p = (quint8 *)&SystemConfig;
+    for(int i = 0 ; i < sizeof(SystemConfig) ; i ++)
+    {
+        *(p+i) = qrand()%0xff;
+    }
 }
 
 bool codeParse::parseProjectName(QString data)
@@ -635,7 +647,7 @@ bool codeParse::compile()
     foreach (quint8 temp, CompiledPara) {
         dataToSerial.append((char)temp);
     }
-    qDebug()<<dataToSerial.size();
+
     //补齐
     quint8 lenMod = (dataToSerial.size() + 2) % 4;
     for(int i=0;i<4-lenMod;i++)
@@ -643,7 +655,7 @@ bool codeParse::compile()
         dataToSerial.append(0xff);
     }
 
-    qDebug()<<dataToSerial.size();
+
     //data len
     quint16 len = dataToSerial.size() + 2;
     dataToSerial.prepend((char)(len &0xff));
@@ -657,7 +669,6 @@ bool codeParse::compile()
     {
         dataToSerial.append((char)(crc32>>(i-1)*8) & 0xff);
     }
-
 
     emit Info("OK:compile success\n");
     return true;
