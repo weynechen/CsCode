@@ -308,18 +308,21 @@ bool codeParse::parseLcdInit(QString data)
             }
         }
     }
+    quint16 initCodeSize = lcdInitPara.size();
+    SystemConfig.LCDInitCode[0] = initCodeSize >> 8;
+    SystemConfig.LCDInitCode[1] = (quint8)initCodeSize;
 
-    SystemConfig.LCDInitCode[0] = lcdInitPara.size();
-
-    if(SystemConfig.LCDInitCode[0] > LCD_INIT_LEN)
+    qDebug()<<initCodeSize;
+    qDebug()<<lcdInitPara;
+    if(initCodeSize > LCD_INIT_LEN)
     {
         emit Info("Error:too much lcd para");
         return false;
     }
 
-    for(int i = 0 ;i<SystemConfig.LCDInitCode[0];i++)
+    for(int i = 0 ;i<initCodeSize;i++)
     {
-        SystemConfig.LCDInitCode[i+1] = lcdInitPara[i];
+        SystemConfig.LCDInitCode[i+2] = lcdInitPara[i];
     }
 
     return true;
