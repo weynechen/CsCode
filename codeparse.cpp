@@ -312,8 +312,6 @@ bool codeParse::parseLcdInit(QString data)
     SystemConfig.LCDInitCode[0] = initCodeSize >> 8;
     SystemConfig.LCDInitCode[1] = (quint8)initCodeSize;
 
-    qDebug()<<initCodeSize;
-    qDebug()<<lcdInitPara;
     if(initCodeSize > LCD_INIT_LEN)
     {
         emit Info("Error:too much lcd para");
@@ -429,11 +427,11 @@ bool codeParse::parsePattern(QString data)
             pattern<<PIC;
             s=s.remove(QRegExp("^PIC\\s+"));
             s=s.remove('"');
-            pattern<<s.size();
             for(int i=0;i<s.size();i++)
             {
                 pattern<<(uint)s.at(i).toLatin1();
             }
+            pattern<<0;
         }
 
         if(s.contains(QRegExp("^horizontal colorbar\\s*")))
@@ -498,12 +496,14 @@ bool codeParse::parsePattern(QString data)
         }
     }
 
-    SystemConfig.Pattern[0] = pattern.size();
+    SystemConfig.Pattern[0] = pattern.size()>>8;
+    SystemConfig.Pattern[1] = pattern.size();
     for(int i =0 ;i<pattern.size();i++)
     {
-        SystemConfig.Pattern[i+1] = pattern[i];
+        SystemConfig.Pattern[i+2] = pattern[i];
     }
-
+    qDebug()<<pattern.size();
+    qDebug()<<hex<<pattern;
     return true;
 }
 
