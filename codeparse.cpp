@@ -174,9 +174,8 @@ bool codeParse::parseLcdPara(QString data)
     quint16 count = 0;
     foreach(quint16 l,lcdPara)
     {
-        SystemConfig.LCDTimingPara[count++] = (quint8)(l>>8);
         SystemConfig.LCDTimingPara[count++] = (quint8)(l&0xff);
-
+        SystemConfig.LCDTimingPara[count++] = (quint8)(l>>8);
     }
 
     return true;
