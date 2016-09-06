@@ -10,21 +10,25 @@ updateConfig::updateConfig(QWidget *parent) :
     ui->setupUi(this);
 }
 
+
 updateConfig::~updateConfig()
 {
     delete ui;
 }
 
+
 void updateConfig::on_openConfig_clicked()
 {
     QString fileName =
-        QFileDialog::getOpenFileName(this, "Open file", configFilePath,
-        "config file(*.cfg)");
-    if (fileName.isEmpty()) {
+            QFileDialog::getOpenFileName(this, "Open file", configFilePath,
+                                         "config file(*.cfg)");
+
+    if (fileName.isEmpty())
+    {
         return;
     }
 
-    configFilePath  = fileName;
+    configFilePath = fileName;
     ui->lineEdit->setText(fileName);
 }
 
@@ -32,7 +36,8 @@ void updateConfig::on_openConfig_clicked()
 void updateConfig::on_updateConfigBt_clicked()
 {
     QFile file(ui->lineEdit->text());
-    if(!file.open(QFile::ReadOnly))
+
+    if (!file.open(QFile::ReadOnly))
     {
         QMessageBox::critical(this, "critical", QStringLiteral("文件无读取权限"));
         return;

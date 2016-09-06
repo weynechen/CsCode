@@ -1,4 +1,4 @@
-﻿#ifndef MSGEDIT_H
+#ifndef MSGEDIT_H
 #define MSGEDIT_H
 
 #include <QPlainTextEdit>
@@ -6,13 +6,14 @@
 
 class msgEdit : public QPlainTextEdit
 {
-    Q_OBJECT
+  Q_OBJECT
 public:
-    msgEdit(QWidget *parent = 0);
+  msgEdit(QWidget *parent = 0);
 protected:
-    virtual void keyPressEvent(QKeyEvent *e);
+  virtual void keyPressEvent(QKeyEvent *e);
+
 private:
-    msgHlighter *msgLighter;
+  msgHlighter *msgLighter;
 };
 
 #endif // MSGEDIT_H

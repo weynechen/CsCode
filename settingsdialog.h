@@ -40,7 +40,7 @@
 
 QT_USE_NAMESPACE
 
-QT_BEGIN_NAMESPACE
+  QT_BEGIN_NAMESPACE
 
 namespace Ui {
 class SettingsDialog;
@@ -52,48 +52,50 @@ QT_END_NAMESPACE
 
 class SettingsDialog : public QDialog
 {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    struct Settings {
-        QString name;
-        qint32 baudRate;
-        QString stringBaudRate;
-        QSerialPort::DataBits dataBits;
-        QString stringDataBits;
-        QSerialPort::Parity parity;
-        QString stringParity;
-        QSerialPort::StopBits stopBits;
-        QString stringStopBits;
-        QSerialPort::FlowControl flowControl;
-        QString stringFlowControl;
-        bool localEchoEnabled;
-    };
+  struct Settings
+  {
+    QString                  name;
+    qint32                   baudRate;
+    QString                  stringBaudRate;
+    QSerialPort::DataBits    dataBits;
+    QString                  stringDataBits;
+    QSerialPort::Parity      parity;
+    QString                  stringParity;
+    QSerialPort::StopBits    stopBits;
+    QString                  stringStopBits;
+    QSerialPort::FlowControl flowControl;
+    QString                  stringFlowControl;
+    bool                     localEchoEnabled;
+  };
 
-    explicit SettingsDialog(QWidget *parent = 0);
-    ~SettingsDialog();
+  explicit SettingsDialog(QWidget *parent = 0);
+  ~SettingsDialog();
 
-    Settings settings() const;
+  Settings settings() const;
+
 signals:
-    void comReady(void);
+  void comReady(void);
 
 private slots:
-    void showPortInfo(int idx);
-    void apply();
-    void checkCustomBaudRatePolicy(int idx);
-    void checkCustomDevicePathPolicy(int idx);
+  void showPortInfo(int idx);
+  void apply();
+  void checkCustomBaudRatePolicy(int idx);
+  void checkCustomDevicePathPolicy(int idx);
 
-    void on_bt_Refresh_clicked();
-
-private:
-    void fillPortsParameters();
-    void fillPortsInfo();
-    void updateSettings();
+  void on_bt_Refresh_clicked();
 
 private:
-    Ui::SettingsDialog *ui;
-    Settings currentSettings;
-    QIntValidator *intValidator;
+  void fillPortsParameters();
+  void fillPortsInfo();
+  void updateSettings();
+
+private:
+  Ui::SettingsDialog *ui;
+  Settings currentSettings;
+  QIntValidator *intValidator;
 };
 
 #endif // SETTINGSDIALOG_H

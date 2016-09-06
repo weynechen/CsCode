@@ -38,7 +38,7 @@
 #include <QtSerialPort/QSerialPortInfo>
 #include <QIntValidator>
 #include <QLineEdit>
-#include<QDebug>
+#include <QDebug>
 QT_USE_NAMESPACE
 
 static const char blankString[] = QT_TRANSLATE_NOOP("SettingsDialog", "N/A");
@@ -68,20 +68,25 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     updateSettings();
 }
 
+
 SettingsDialog::~SettingsDialog()
 {
     delete ui;
 }
+
 
 SettingsDialog::Settings SettingsDialog::settings() const
 {
     return currentSettings;
 }
 
+
 void SettingsDialog::showPortInfo(int idx)
 {
     if (idx == -1)
+    {
         return;
+    }
 
     QStringList list = ui->serialPortInfoListBox->itemData(idx).toStringList();
     ui->descriptionLabel->setText(tr("Description: %1").arg(list.count() > 1 ? list.at(1) : tr(blankString)));
@@ -92,32 +97,41 @@ void SettingsDialog::showPortInfo(int idx)
     ui->pidLabel->setText(tr("Product Identifier: %1").arg(list.count() > 6 ? list.at(6) : tr(blankString)));
 }
 
+
 void SettingsDialog::apply()
 {
     updateSettings();
-   //hide();
+    //hide();
     close();
-        emit comReady();
+    emit comReady();
 }
+
 
 void SettingsDialog::checkCustomBaudRatePolicy(int idx)
 {
     bool isCustomBaudRate = !ui->baudRateBox->itemData(idx).isValid();
+
     ui->baudRateBox->setEditable(isCustomBaudRate);
-    if (isCustomBaudRate) {
+    if (isCustomBaudRate)
+    {
         ui->baudRateBox->clearEditText();
         QLineEdit *edit = ui->baudRateBox->lineEdit();
         edit->setValidator(intValidator);
     }
 }
 
+
 void SettingsDialog::checkCustomDevicePathPolicy(int idx)
 {
     bool isCustomPath = !ui->serialPortInfoListBox->itemData(idx).isValid();
+
     ui->serialPortInfoListBox->setEditable(isCustomPath);
     if (isCustomPath)
+    {
         ui->serialPortInfoListBox->clearEditText();
+    }
 }
+
 
 void SettingsDialog::fillPortsParameters()
 {
@@ -152,6 +166,7 @@ void SettingsDialog::fillPortsParameters()
     ui->flowControlBox->addItem(tr("XON/XOFF"), QSerialPort::SoftwareControl);
 }
 
+
 void SettingsDialog::fillPortsInfo()
 {
     ui->serialPortInfoListBox->clear();
@@ -159,8 +174,10 @@ void SettingsDialog::fillPortsInfo()
     QString manufacturer;
     QString serialNumber;
 
-    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
+    foreach(const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
+    {
         QStringList list;
+
         description = info.description();
         manufacturer = info.manufacturer();
         serialNumber = info.serialNumber();
@@ -173,16 +190,20 @@ void SettingsDialog::fillPortsInfo()
              << (info.productIdentifier() ? QString::number(info.productIdentifier(), 16) : blankString);
         ui->serialPortInfoListBox->addItem(list.first(), list);
     }
-        ui->serialPortInfoListBox->addItem(tr("Custom"));
+    ui->serialPortInfoListBox->addItem(tr("Custom"));
 }
+
 
 void SettingsDialog::updateSettings()
 {
     currentSettings.name = ui->serialPortInfoListBox->currentText();
 
-    if (ui->baudRateBox->currentIndex() == 4) {
+    if (ui->baudRateBox->currentIndex() == 4)
+    {
         currentSettings.baudRate = ui->baudRateBox->currentText().toInt();
-    } else {
+    }
+    else
+    {
         currentSettings.baudRate = static_cast<QSerialPort::BaudRate>(
                     ui->baudRateBox->itemData(ui->baudRateBox->currentIndex()).toInt());
     }
@@ -206,6 +227,7 @@ void SettingsDialog::updateSettings()
 
     currentSettings.localEchoEnabled = ui->localEchoCheckBox->isChecked();
 }
+
 
 void SettingsDialog::on_bt_Refresh_clicked()
 {

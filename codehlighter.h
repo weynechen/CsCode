@@ -1,42 +1,42 @@
-﻿#ifndef TEXTHLIGHTER_H
+#ifndef TEXTHLIGHTER_H
 #define TEXTHLIGHTER_H
 #include <QSyntaxHighlighter>
 #include <QTextDocument>
 #include <QTextCharFormat>
 #include <QVector>
 
-class CodeHlighter :QSyntaxHighlighter
+class CodeHlighter : QSyntaxHighlighter
 {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    CodeHlighter(QTextDocument *t);
+  CodeHlighter(QTextDocument *t);
 private:
 
-    typedef struct
-    {
-        QTextCharFormat format;
-        QRegExp exp;
-    }highligherRules;
+  typedef struct
+  {
+    QTextCharFormat format;
+    QRegExp         exp;
+  } highligherRules;
 
-    QVector<highligherRules> hr;
+  QVector<highligherRules> hr;
 
-    QTextCharFormat sectorTitle;
-    QRegExp TitleStartExpression;
-    QRegExp TitleEndExpression;
+  QTextCharFormat sectorTitle;
+  QRegExp TitleStartExpression;
+  QRegExp TitleEndExpression;
 
-    QTextCharFormat blockComments;
-    QRegExp blockCommentsStartExpression;
-    QRegExp blockCommentsEndExpression;
+  QTextCharFormat blockComments;
+  QRegExp blockCommentsStartExpression;
+  QRegExp blockCommentsEndExpression;
 
-    highligherRules hexNum;
-    highligherRules decNum;
-    highligherRules lineComment;
-    highligherRules title;
-    highligherRules atSymbol;
+  highligherRules hexNum;
+  highligherRules decNum;
+  highligherRules lineComment;
+  highligherRules title;
+  highligherRules atSymbol;
 
 protected:
-    void highlightBlock(const QString &text);
+  void highlightBlock(const QString& text);
 };
 
 #endif // TEXTHLIGHTER_H
