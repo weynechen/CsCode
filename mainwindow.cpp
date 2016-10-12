@@ -9,9 +9,10 @@
 #include <QMessageBox>
 #include <QTextStream> //文本流输入输出
 #include "crc.h"
+#include "protocol/rec.h"
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), isDownloadDone(false), isFileSaved(true)
+    : QMainWindow(parent), ui(new Ui::MainWindow), isDownloadDone(false), isFileSaved(true),mLidarRawDataCounter(0)
 {
     ui->setupUi(this);
 
@@ -349,14 +350,82 @@ void MainWindow::openSerialPort()
     }
 }
 
+bool MainWindow::IsDataReady(QByteArray &data)
+{
+    QString hexStr;
+    int hexData;
+    bool ok;
+    bool result=false;
+
+    //转换数据到十六进制的ASCII码形式，每个data[i]表示4个bit的16进制，data[i] | data[i+1]=hex
+    data=data.toHex();
+    hexStr.resize(2);
+
+    for(int i=0;i<data.size();i+=2)
+    {
+        hexStr[0]=data[i];
+        hexStr[1]=data[i+1];
+        hexData=QString(hexStr).toInt(&ok,16);
+
+        if(ok)
+        {
+            comData += hexData;
+            mLidarRawData[mLidarRawDataCounter++] = hexData;
+            mRecPackage.DataInBuff = mLidarRawData;
+            mRecPackage.DataInLen = mLidarRawDataCounter;
+            mRecPackage.DataOutLen = &mDataLen;
+
+            if(result == false)
+                if(Unpacking(&mRecPackage) == PACK_OK)
+                {
+                    mLidarRawDataCounter = 0;
+                    comData.clear();
+                    result = true;
+                }
+
+            if(mLidarRawDataCounter == MAX_DATA_AMOUTN_PER_FRAME)
+            {
+                mLidarRawDataCounter = 0;
+                result = false;
+                break;
+            }
+        }
+    }
+
+    if(comData.size() > MAX_DATA_AMOUTN_PER_FRAME * 10)
+        comData.clear();
+
+    return result;
+}
+
 
 void MainWindow::readData()
 {
+    QByteArray data = serial->readAll();
+    char buffer[512];
     QTextCursor textCursor(msg->document());
 
-    textCursor.movePosition(QTextCursor::End);
-    msg->setTextCursor(textCursor);
-    msg->insertPlainText(serial->readAll());
+    if(IsDataReady(data) == false)
+        return;
+
+    switch(mRecPackage.DataID)
+    {
+    case ACK_STRING:
+        memset(buffer,0,sizeof(buffer));
+        memcpy(buffer,mRecPackage.DataOutBuff,mDataLen);
+
+
+        textCursor.movePosition(QTextCursor::End);
+        msg->setTextCursor(textCursor);
+        msg->insertPlainText(QString(buffer));
+
+        break;
+
+    default:
+        break;
+    }
+
+    mRecPackage.DataID = ACK_NULL;
 }
 
 

@@ -24,7 +24,9 @@ SOURCES += main.cpp\
     settingsdialog.cpp \
     imagetobindialog.cpp \
     updateconfig.cpp \
-    crc.cpp
+    crc.cpp \
+    protocol/rec.cpp \
+    protocol/transmit.cpp
 
 HEADERS  += mainwindow.h \
     commandedit.h \
@@ -37,7 +39,10 @@ HEADERS  += mainwindow.h \
     settingsdialog.h \
     imagetobindialog.h \
     updateconfig.h \
-    crc.h
+    crc.h \
+    protocol/pro.h \
+    protocol/rec.h \
+    protocol/transmit.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \
