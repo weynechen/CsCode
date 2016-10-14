@@ -10,6 +10,7 @@
 #include <QTextStream> //文本流输入输出
 #include "crc.h"
 #include "protocol/rec.h"
+#include "QTime"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), isDownloadDone(false), isFileSaved(true),mLidarRawDataCounter(0)
@@ -173,7 +174,7 @@ void MainWindow::download()
     }
     if (serial->isOpen())
     {
-        qDebug() << serial->write(parse->dataToSerial);
+        serial->write(parse->dataToSerial);
         isDownloadDone = true;
     }
     else
@@ -264,11 +265,18 @@ void MainWindow::burnConfig()
         return;
     }
 
-    char a[] = { 0xAA, 0xAA, FLASH_CONFIG_FILE, 0x55, 0x55 };
-    QByteArray data(a, 5);
-    data.prepend(mUpdateConfig->configData);
+    serial->write(mUpdateConfig->configData);
 
-    serial->write(data);
+    waitSTM32Work(500);
+
+    const quint8 a[] = { 0, 4, IF_UART1,FLASH_PARA};
+    QByteArray ba((char *)a,4);
+
+    //crc32
+    crc config_crc;
+    config_crc.appendCrc(ba);
+
+    serial->write(ba);
 }
 
 
@@ -396,6 +404,15 @@ bool MainWindow::IsDataReady(QByteArray &data)
         comData.clear();
 
     return result;
+}
+
+void MainWindow::waitSTM32Work(int t)
+{
+    //延时一段时间，让串口数据分段发送，而不是缓冲之后一起发送
+    QTime time;
+    time.start();
+    while(time.elapsed() < t)
+        QCoreApplication::processEvents();
 }
 
 

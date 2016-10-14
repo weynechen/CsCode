@@ -69,6 +69,8 @@ private:
     bool isFileSaved;
     void loadFile();
     bool IsDataReady(QByteArray &data);
+    void waitSTM32Work(int t);
+
 
 private slots:
     void fileOpenWithDialog(bool);
