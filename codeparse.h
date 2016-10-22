@@ -56,33 +56,24 @@ typedef enum
 } InterfaceTypeDef;
 
 
-class codeParse : public QObject
+class CodeParse : public QObject
 {
   Q_OBJECT
 
 private:
 
-  const uint maxCurrent;
-
-  QString strToParse;
-  QStringList titleStr;
-  QStringList powerStr;
-  QStringList lcdParaStr;
-  QStringList lcdInit;
-
-  QString projectName;
-  uint power;
-  uint backlight;
-
-  quint8 autoRun;
-
-  QList<quint8> CompiledPara;
-
-
-
-  ConfigTypeDef SystemConfig;
-
-
+  const uint mMaxCurrent;
+  QString mStrToParse;
+  QStringList mTitleStr;
+  QStringList mPowerStr;
+  QStringList mLcdParaStr;
+  QStringList mLcdInit;
+  QString mProjectName;
+  uint mPower;
+  uint mBacklight;
+  quint8 mAutoRun;
+  QList<quint8> mCompiledPara;
+  ConfigTypeDef mSystemConfig;
 
   typedef enum
   {
@@ -126,7 +117,7 @@ private:
 public:
 
 
-  codeParse(QObject *parent);
+  CodeParse(QObject *parent);
 
   bool parseProjectName(QString data);
   bool parsePower(QString data);
@@ -136,11 +127,10 @@ public:
   bool parseMipi(QString data);
   bool parsePattern(QString data);
   bool parseAutoRun(QString data);
-
   bool compile(void);
   void updateStr(QString& str);
 
-  QByteArray dataToSerial;
+  QByteArray DataToSerial;
 
 public slots:
 

@@ -1,4 +1,4 @@
-#ifndef MSGEDIT_H
+﻿#ifndef MSGEDIT_H
 #define MSGEDIT_H
 
 #include <QPlainTextEdit>
@@ -13,7 +13,7 @@ protected:
   virtual void keyPressEvent(QKeyEvent *e);
 
 private:
-  msgHlighter *msgLighter;
+  msgHlighter *mMsgLighter;
 };
 
 #endif // MSGEDIT_H

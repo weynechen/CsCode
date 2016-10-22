@@ -11,7 +11,7 @@ msgEdit::msgEdit(QWidget *parent) : QPlainTextEdit(parent)
     //    this->setPalette(p);
 
     this->setReadOnly(true);
-    msgLighter = new msgHlighter(this->document());
+    mMsgLighter = new msgHlighter(this->document());
 }
 
 

@@ -4,7 +4,7 @@
 #include "QTextCursor"
 
 
-commandEdit::commandEdit(QWidget *parent) : QPlainTextEdit(parent), commandCounter(0)
+CommandEdit::CommandEdit(QWidget *parent) : QPlainTextEdit(parent), mCommandCounter(0)
 {
     QFont f("Courier", 12);
 
@@ -16,11 +16,11 @@ commandEdit::commandEdit(QWidget *parent) : QPlainTextEdit(parent), commandCount
     //    this->setPalette(p);
 
     this->setPlainText("-> ");
-    cmdLighter = new commandHlighter(this->document());
+    mCmdLighter = new commandHlighter(this->document());
 }
 
 
-void commandEdit::keyPressEvent(QKeyEvent *e)
+void CommandEdit::keyPressEvent(QKeyEvent *e)
 {
     //ensure that cursor is always at last postion
     QString text = this->toPlainText();
@@ -40,18 +40,18 @@ void commandEdit::keyPressEvent(QKeyEvent *e)
         strLine = ts.readLine();
         if (!strLine.isEmpty())
         {
-            if (commandStr.isEmpty())
+            if (mCommandStr.isEmpty())
             {
-                commandStr << strLine;
-                commandCounter = commandStr.size();
+                mCommandStr << strLine;
+                mCommandCounter = mCommandStr.size();
             }
             else
             {
-                if (strLine != commandStr.last())
+                if (strLine != mCommandStr.last())
                 {
-                    commandStr << strLine;
+                    mCommandStr << strLine;
                 }
-                commandCounter = commandStr.size();
+                mCommandCounter = mCommandStr.size();
             }
         }
 
@@ -68,9 +68,9 @@ void commandEdit::keyPressEvent(QKeyEvent *e)
 
     case Qt::Key_Up:
         //   qDebug()<<commandCounter;
-        if (commandStr.isEmpty() == false)
+        if (mCommandStr.isEmpty() == false)
         {
-            if (commandCounter > 0)
+            if (mCommandCounter > 0)
             {
                 //选中一行，再覆盖
                 QTextCursor cursor = this->textCursor();
@@ -78,16 +78,16 @@ void commandEdit::keyPressEvent(QKeyEvent *e)
                 setTextCursor(cursor);
                 insertPlainText("-> ");
 
-                this->insertPlainText(commandStr[--commandCounter]);
+                this->insertPlainText(mCommandStr[--mCommandCounter]);
             }
         }
         break;
 
     case Qt::Key_Down:
         //      qDebug()<<commandCounter;
-        if (commandStr.isEmpty() == false)
+        if (mCommandStr.isEmpty() == false)
         {
-            if (commandCounter < commandStr.size())
+            if (mCommandCounter < mCommandStr.size())
             {
                 //选中一行，再覆盖
                 QTextCursor cursor = this->textCursor();
@@ -95,7 +95,7 @@ void commandEdit::keyPressEvent(QKeyEvent *e)
                 setTextCursor(cursor);
                 insertPlainText("-> ");
 
-                this->insertPlainText(commandStr[commandCounter++]);
+                this->insertPlainText(mCommandStr[mCommandCounter++]);
             }
         }
         break;

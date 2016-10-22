@@ -1,21 +1,21 @@
-#ifndef COMMANDEDIT_H
+﻿#ifndef COMMANDEDIT_H
 #define COMMANDEDIT_H
 
 #include <QPlainTextEdit>
 #include "commandhlighter.h"
 
-class commandEdit : public QPlainTextEdit
+class CommandEdit : public QPlainTextEdit
 {
   Q_OBJECT
 public:
-  commandEdit(QWidget *parent = 0);
+  CommandEdit(QWidget *parent = 0);
 protected:
   virtual void keyPressEvent(QKeyEvent *e);
 
 private:
-  commandHlighter *cmdLighter;
-  QStringList commandStr;
-  int commandCounter;
+  commandHlighter *mCmdLighter;
+  QStringList mCommandStr;
+  int mCommandCounter;
 
 signals:
   void command(QString str);

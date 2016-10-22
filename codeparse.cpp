@@ -4,39 +4,39 @@
 #include "crc.h"
 #include "QTime"
 
-codeParse::codeParse(QObject *parent) : QObject(parent), power(0), backlight(0), maxCurrent(150)
+CodeParse::CodeParse(QObject *parent) : QObject(parent), mPower(0), mBacklight(0), mMaxCurrent(150)
 {
-    titleStr << "project name" << "power" << "backlight" << "LCD parameter" << "MIPI setting" << "LCD initial code" << "pattern" << "auto run";
-    powerStr << "1.8V" << "2.8V" << "3.3V" << "5V" << "-5V";
-    lcdParaStr << "pix clock" << "horizontal resolution" << "vertical resolution" << "horizontal back porch"
+    mTitleStr << "project name" << "power" << "backlight" << "LCD parameter" << "MIPI setting" << "LCD initial code" << "pattern" << "auto run";
+    mPowerStr << "1.8V" << "2.8V" << "3.3V" << "5V" << "-5V";
+    mLcdParaStr << "pix clock" << "horizontal resolution" << "vertical resolution" << "horizontal back porch"
                << "horizontal front porch" << "horizontal sync pulse width" << "vertical back porch" << "vertical front porch"
                << "vertical sync pulse width";
-    lcdInit << "package" << "write" << "delay" << "read";
+    mLcdInit << "package" << "write" << "delay" << "read";
 
     //初始化SystemConfig
     QTime t;
     t = QTime::currentTime();
     qsrand(t.msec() + t.second() * 1000);
-    quint8 *p = (quint8 *)&SystemConfig;
-    for (int i = 0; i < sizeof(SystemConfig); i++)
+    quint8 *p = (quint8 *)&mSystemConfig;
+    for (int i = 0; i < sizeof(mSystemConfig); i++)
     {
         *(p + i) = qrand() % 0xff;
     }
 }
 
 
-bool codeParse::parseProjectName(QString data)
+bool CodeParse::parseProjectName(QString data)
 {
     data.remove(QRegExp("\n"));
     data.remove(QRegExp("\\s+$"));
-    projectName = data;
+    mProjectName = data;
 
     emit Info(QString("project Name:%1").arg(data));
     return true;
 }
 
 
-bool codeParse::parsePower(QString data)
+bool CodeParse::parsePower(QString data)
 {
     if (data.isEmpty())
     {
@@ -46,7 +46,7 @@ bool codeParse::parsePower(QString data)
     QRegExp rx("-?\\d.?\\d?V");
     QTextStream ts(&data);
     QString strLine;
-    SystemConfig.PowerSettings = 0;
+    mSystemConfig.PowerSettings = 0;
     while (!ts.atEnd())
     {
         strLine = ts.readLine();
@@ -54,27 +54,27 @@ bool codeParse::parsePower(QString data)
         bool match = rx.exactMatch(strLine);
         if (match)
         {
-            switch (powerStr.indexOf(QRegExp(strLine)))
+            switch (mPowerStr.indexOf(QRegExp(strLine)))
             {
             case 0:
-                SystemConfig.PowerSettings |= 0x01;
+                mSystemConfig.PowerSettings |= 0x01;
 
                 break;
 
             case 1:
-                SystemConfig.PowerSettings |= 0x2;
+                mSystemConfig.PowerSettings |= 0x2;
                 break;
 
             case 2:
-                SystemConfig.PowerSettings |= 0x4;
+                mSystemConfig.PowerSettings |= 0x4;
                 break;
 
             case 3:
-                SystemConfig.PowerSettings |= 0x8;
+                mSystemConfig.PowerSettings |= 0x8;
                 break;
 
             case 4:
-                SystemConfig.PowerSettings |= 0x10;
+                mSystemConfig.PowerSettings |= 0x10;
                 break;
 
             default:
@@ -93,7 +93,7 @@ bool codeParse::parsePower(QString data)
 }
 
 
-bool codeParse::parseBacklight(QString data)
+bool CodeParse::parseBacklight(QString data)
 {
     if (data.isEmpty())
     {
@@ -110,11 +110,11 @@ bool codeParse::parseBacklight(QString data)
     }
     bool ok;
 
-    SystemConfig.Backlight = rx.cap(0).toInt(&ok, 10);
+    mSystemConfig.Backlight = rx.cap(0).toInt(&ok, 10);
 
     if (ok)
     {
-        if (SystemConfig.Backlight <= maxCurrent)
+        if (mSystemConfig.Backlight <= mMaxCurrent)
         {
             return true;
         }
@@ -125,7 +125,7 @@ bool codeParse::parseBacklight(QString data)
 }
 
 
-bool codeParse::parseLcdPara(QString data)
+bool CodeParse::parseLcdPara(QString data)
 {
     if (data.isEmpty())
     {
@@ -139,7 +139,7 @@ bool codeParse::parseLcdPara(QString data)
     QString strLine;
     QList<quint16> lcdPara;
 
-    foreach(QString s, lcdParaStr)
+    foreach(QString s, mLcdParaStr)
     {
         if (data.indexOf(s) == -1)
         {
@@ -181,15 +181,15 @@ bool codeParse::parseLcdPara(QString data)
     quint16 count = 0;
     foreach(quint16 l, lcdPara)
     {
-        SystemConfig.LCDTimingPara[count++] = (quint8)(l & 0xff);
-        SystemConfig.LCDTimingPara[count++] = (quint8)(l >> 8);
+        mSystemConfig.LCDTimingPara[count++] = (quint8)(l & 0xff);
+        mSystemConfig.LCDTimingPara[count++] = (quint8)(l >> 8);
     }
 
     return true;
 }
 
 
-bool codeParse::parseLcdInit(QString data)
+bool CodeParse::parseLcdInit(QString data)
 {
     QRegExp rxDec("\\d+");
     QRegExp rxHex("0x[0-9A-Fa-f]+");
@@ -317,8 +317,8 @@ bool codeParse::parseLcdInit(QString data)
         }
     }
     quint16 initCodeSize = lcdInitPara.size();
-    SystemConfig.LCDInitCode[0] = initCodeSize >> 8;
-    SystemConfig.LCDInitCode[1] = (quint8)initCodeSize;
+    mSystemConfig.LCDInitCode[0] = initCodeSize >> 8;
+    mSystemConfig.LCDInitCode[1] = (quint8)initCodeSize;
 
     if (initCodeSize > LCD_INIT_LEN)
     {
@@ -328,14 +328,14 @@ bool codeParse::parseLcdInit(QString data)
 
     for (int i = 0; i < initCodeSize; i++)
     {
-        SystemConfig.LCDInitCode[i + 2] = lcdInitPara[i];
+        mSystemConfig.LCDInitCode[i + 2] = lcdInitPara[i];
     }
 
     return true;
 }
 
 
-bool codeParse::parseMipi(QString data)
+bool CodeParse::parseMipi(QString data)
 {
     bool ok;
     QRegExp rxDec("\\d+");
@@ -384,16 +384,16 @@ bool codeParse::parseMipi(QString data)
     }
     else
     {
-        SystemConfig.MIPIConfig[0] = 3;
-        SystemConfig.MIPIConfig[1] = mipiSpeed >> 8;
-        SystemConfig.MIPIConfig[2] = mipiSpeed & 0xff;
-        SystemConfig.MIPIConfig[3] = mipiLane & 0xff;
+        mSystemConfig.MIPIConfig[0] = 3;
+        mSystemConfig.MIPIConfig[1] = mipiSpeed >> 8;
+        mSystemConfig.MIPIConfig[2] = mipiSpeed & 0xff;
+        mSystemConfig.MIPIConfig[3] = mipiLane & 0xff;
         return true;
     }
 }
 
 
-bool codeParse::parsePattern(QString data)
+bool CodeParse::parsePattern(QString data)
 {
     bool ok;
 
@@ -506,11 +506,11 @@ bool codeParse::parsePattern(QString data)
         }
     }
 
-    SystemConfig.Pattern[0] = pattern.size() >> 8;
-    SystemConfig.Pattern[1] = pattern.size();
+    mSystemConfig.Pattern[0] = pattern.size() >> 8;
+    mSystemConfig.Pattern[1] = pattern.size();
     for (int i = 0; i < pattern.size(); i++)
     {
-        SystemConfig.Pattern[i + 2] = pattern[i];
+        mSystemConfig.Pattern[i + 2] = pattern[i];
     }
     qDebug() << pattern.size();
     qDebug() << hex << pattern;
@@ -518,7 +518,7 @@ bool codeParse::parsePattern(QString data)
 }
 
 
-bool codeParse::parseAutoRun(QString data)
+bool CodeParse::parseAutoRun(QString data)
 {
     if (data.isEmpty())
     {
@@ -528,27 +528,27 @@ bool codeParse::parseAutoRun(QString data)
     data.remove(QRegExp("\\s+"));
     if (data == "NO")
     {
-        SystemConfig.IsAutoRun = 0;
+        mSystemConfig.IsAutoRun = 0;
         return true;
     }
     else if (data == "YES")
     {
-        SystemConfig.IsAutoRun = 1;
+        mSystemConfig.IsAutoRun = 1;
         return true;
     }
     return false;
 }
 
 
-void codeParse::updateStr(QString& str)
+void CodeParse::updateStr(QString& str)
 {
-    strToParse = str;
+    mStrToParse = str;
 }
 
 
-bool codeParse::compile()
+bool CodeParse::compile()
 {
-    QString str = strToParse;
+    QString str = mStrToParse;
 
     if (str.isEmpty())
     {
@@ -588,7 +588,7 @@ bool codeParse::compile()
     //根据title选择不同的解析函数
     foreach(QString s, title)
     {
-        switch (titleStr.indexOf(QRegExp(s)))
+        switch (mTitleStr.indexOf(QRegExp(s)))
         {
         case 0:
             emit Info("Info:find project Name");
@@ -646,27 +646,27 @@ bool codeParse::compile()
         }
     }
 
-    CompiledPara.clear();
+    mCompiledPara.clear();
 
     //data
-    quint8 *p = (quint8 *)&SystemConfig;
+    quint8 *p = (quint8 *)&mSystemConfig;
     for (int i = 0; i < sizeof(ConfigTypeDef); i++)
     {
-        CompiledPara << *p++;
+        mCompiledPara << *p++;
     }
 
-    dataToSerial.clear();
+    DataToSerial.clear();
 
-    foreach(quint8 temp, CompiledPara)
+    foreach(quint8 temp, mCompiledPara)
     {
-        dataToSerial.append((char)temp);
+        DataToSerial.append((char)temp);
     }
 
     //补齐
-    quint8 lenMod = (dataToSerial.size() + 2) % 4;
+    quint8 lenMod = (DataToSerial.size() + 2) % 4;
     for (int i = 0; i < 4 - lenMod; i++)
     {
-        dataToSerial.append(0xff);
+        DataToSerial.append(0xff);
     }
 
     emit Info("OK:compile success\n");
