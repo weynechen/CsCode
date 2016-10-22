@@ -648,12 +648,6 @@ bool codeParse::compile()
 
     CompiledPara.clear();
 
-    //interface number
-    CompiledPara << (char)IF_UART1;
-
-    //ID
-    CompiledPara << RE_INIT_START;
-
     //data
     quint8 *p = (quint8 *)&SystemConfig;
     for (int i = 0; i < sizeof(ConfigTypeDef); i++)
@@ -674,16 +668,6 @@ bool codeParse::compile()
     {
         dataToSerial.append(0xff);
     }
-
-
-    //data len
-    quint16 len = dataToSerial.size() + 2;
-    dataToSerial.prepend((char)(len & 0xff));
-    dataToSerial.prepend((char)((len >> 8) & 0xff));
-
-    //crc32
-    crc config_crc;
-    config_crc.appendCrc(dataToSerial);
 
     emit Info("OK:compile success\n");
     return true;

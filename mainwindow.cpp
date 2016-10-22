@@ -10,6 +10,7 @@
 #include <QTextStream> //文本流输入输出
 #include "crc.h"
 #include "protocol/rec.h"
+#include "protocol/transmit.h"
 #include "QTime"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -167,21 +168,47 @@ void MainWindow::closeSerialPort()
 
 void MainWindow::download()
 {
+    PackageDataStruct package;
+    u32 len;
+    u8 packageBuffer[8192];
+
     if (parse->dataToSerial.isEmpty())
     {
         msg->appendPlainText("Error:Please compile code first");
         return;
     }
-    if (serial->isOpen())
-    {
-        serial->write(parse->dataToSerial);
-        isDownloadDone = true;
-    }
-    else
+
+    if (serial->isOpen() == false)
     {
         msg->appendPlainText("Error:Please open serial port first");
         return;
     }
+
+    ui->actionDownload->setEnabled(false);
+
+    package.DataID = RE_INIT_START;
+    package.DataInBuff = (u8*)parse->dataToSerial.data();
+    package.DataInLen = parse->dataToSerial.size();
+    package.DataOutBuff = packageBuffer;
+    package.DataOutLen = &len;
+    Package(package);
+
+    u32 i=0;
+
+    u32 times = len/64;
+
+    for(;i<times;i++)
+    {
+        serial->write((char *)(packageBuffer+i*64),64);
+        waitSTM32Work(10);
+    }
+
+    waitSTM32Work(10);
+    if(len%64!=0)
+        serial->write((char *)(packageBuffer+times*64),len%64);
+
+    ui->actionDownload->setEnabled(true);
+    isDownloadDone = true;
 }
 
 
@@ -199,14 +226,19 @@ void MainWindow::flash()
         return;
     }
 
-    const quint8 a[] = { 0, 4, IF_UART1,FLASH_PARA};
-    QByteArray ba((char *)a,4);
+    PackageDataStruct package;
+    u32 len;
+    u8 data=0;
+    u8 packageBuffer[8192];
 
-    //crc32
-    crc config_crc;
-    config_crc.appendCrc(ba);
+    package.DataID = FLASH_PARA;
+    package.DataInBuff = (u8*)&data;
+    package.DataInLen = sizeof(data);
+    package.DataOutBuff = packageBuffer;
+    package.DataOutLen = &len;
+    Package(package);
 
-    serial->write(ba);
+    serial->write((char*)packageBuffer,len);
 }
 
 
@@ -674,3 +706,4 @@ void MainWindow::parseCommand(QString str)
         command->appendPlainText("Error:invalid command-->" + str);
     }
 }
+

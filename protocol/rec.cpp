@@ -71,7 +71,7 @@ ResultTypeDef Unpacking(PackageDataStruct *package)
                             *package->DataOutLen = data_out_count - 1 - sizeof(SdkProtocolHeaderTypeDef);
                             package->DataOutBuff = ParseBuffer + sizeof(SdkProtocolHeaderTypeDef);
 							
-							if(sdk->DeviceAddr == LIDAR_ADDRESS)
+							if(sdk->DeviceAddr == LCD_ADDRESS)
                                 package->DataID = (AckDataIDTypeDef)sdk->FunctionCode;
 							else
                                 package->DataID = ACK_NULL;

@@ -1,4 +1,4 @@
-/**
+﻿/**
   * @file        transmit.c
   * @author      陈维
   * @version     V01
@@ -29,7 +29,7 @@ ResultTypeDef Package(PackageDataStruct package)
 	if((package.DataInBuff == NULL) || (package.DataOutBuff == NULL) || (package.DataOutLen == NULL))
 		return PACK_FAIL;
 	
-	sdk_header.DeviceAddr = LIDAR_ADDRESS;
+    sdk_header.DeviceAddr = LCD_ADDRESS;
 	sdk_header.FunctionCode = package.DataID;
 	sdk_header.StartAddr = 0;
 	sdk_header.Len = package.DataInLen;

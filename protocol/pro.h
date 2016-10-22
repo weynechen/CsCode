@@ -16,7 +16,7 @@
 #define u16              unsigned short
 #define u32              unsigned int
 #define s16              short
-#define LIDAR_ADDRESS    0x10
+#define LCD_ADDRESS    0x10
 #define PARSE_LEN           2048    //>1036
 #define MIN_PRO_NUM      14
 
@@ -54,7 +54,7 @@ typedef enum
 
 typedef struct
 {
-    AckDataIDTypeDef DataID;
+    u8               DataID;
     u8               *DataInBuff;
     u32              DataInLen;
     u8               *DataOutBuff;
