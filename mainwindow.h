@@ -15,6 +15,7 @@
 #include "updateconfig.h"
 #include "protocol/pro.h"
 #include "QProgressBar"
+#include "QTimer"
 
 #define MAX_DATA_AMOUTN_PER_FRAME 8192
 namespace Ui {
@@ -34,6 +35,7 @@ public:
     void clearCmd(QString);
     void help(QString);
     void setPattern(QString s);
+    void upgradeFirmware(QString str);
 
 private:
     Ui::MainWindow *ui;
@@ -63,7 +65,6 @@ private:
     bool mIsDownloadDone;
     bool mIsFileSaved;
 
-
     bool saveToFile(const QString& fileName);
     void loadFile();
     bool IsDataReady(QByteArray &data);
@@ -74,6 +75,7 @@ private:
     void initAction();
     void restoreCustom();
     void recoverCustom();
+    void sendCmd(quint8 t);
 
 private slots:
     void openFileWithDialog(bool);

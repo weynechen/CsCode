@@ -76,7 +76,7 @@ void MainWindow::downloadConfig()
 
     ui->actionDownload->setEnabled(false);
 
-    package.DataID = RE_INIT_START;
+    package.DataID = ACT_RE_INIT_START;
     package.DataInBuff = (u8*)mParse->DataToSerial.data();
     package.DataInLen = mParse->DataToSerial.size();
     package.DataOutBuff = packageBuffer;
@@ -109,18 +109,23 @@ void MainWindow::downloadConfig()
     mIsDownloadDone = true;
 }
 
-
 void MainWindow::sendFlashCmd()
+{
+    if (!mIsDownloadDone)
+    {
+        mMsg->appendPlainText("Error:Please download code first");
+        return;
+    }
+
+    sendCmd(ACT_FLASH_PARA);
+}
+
+
+void MainWindow::sendCmd(quint8 t)
 {
     if (!mSerialPort->isOpen())
     {
         mMsg->appendPlainText("Error:Please open serial port first");
-        return;
-    }
-
-    if (!mIsDownloadDone)
-    {
-        mMsg->appendPlainText("Error:Please download code first");
         return;
     }
 
@@ -129,7 +134,7 @@ void MainWindow::sendFlashCmd()
     u8 data=0;
     u8 packageBuffer[8192];
 
-    package.DataID = FLASH_PARA;
+    package.DataID = t;
     package.DataInBuff = (u8*)&data;
     package.DataInLen = sizeof(data);
     package.DataOutBuff = packageBuffer;
@@ -199,7 +204,7 @@ void MainWindow::burnConfig()
 
     waitSTM32Work(500);
 
-    const quint8 a[] = { 0, 4, IF_UART1,FLASH_PARA};
+    const quint8 a[] = { 0, 4, IF_UART1,ACT_FLASH_PARA};
     QByteArray ba((char *)a,4);
 
     //crc32
@@ -207,6 +212,35 @@ void MainWindow::burnConfig()
     config_crc.appendCrc(ba);
 
     mSerialPort->write(ba);
+}
+
+void MainWindow::upgradeFirmware(QString str)
+{
+    QString filePath = str.remove(QRegExp("upgrade +"));
+
+    if(!filePath.contains(QRegExp("*.ifw")))
+    {
+        mMsg->appendPlainText("Error:wrong firmware or path");
+        return;
+    }
+
+    QFile upgradeFile(filePath);
+    if(upgradeFile.open(QIODevice::ReadOnly) == false)
+    {
+        mMsg->appendPlainText("Error:permssion denied");
+        return;
+    }
+    sendCmd(ACT_UPDATE_FIRMWARE);
+
+    bool isEnd = false;
+    QTime timeout;
+    timeout.start();
+
+    while(!isEnd)
+    {
+
+        QCoreApplication::processEvents();
+    }
 }
 
 
@@ -367,9 +401,10 @@ void MainWindow::initEdit()
     mCommandEditLayout->addWidget(mCommandEdit);
     mCommandList << command_type("help", &MainWindow::help)
                  << command_type("clear", &MainWindow::clearCmd)
-                 << command_type("pattern", &MainWindow::setPattern);
+                 << command_type("pattern", &MainWindow::setPattern)
+                 << command_type("upgrade", &MainWindow::upgradeFirmware);
 
-    connect(mCommandEdit, SIGNAL(mCommandEdit(QString)), this, SLOT(parseCommand(QString)));
+    connect(mCommandEdit, SIGNAL(command(QString)), this, SLOT(parseCommand(QString)));
 
 }
 
@@ -553,7 +588,7 @@ void MainWindow::setPattern(QString s)
     }
     if (ok)
     {
-        const quint8 a[] = { 0xAA, 0xAA, SET_FRAME, frame, 0x55, 0x55 };
+        const quint8 a[] = { 0xAA, 0xAA, ACT_SET_FRAME, frame, 0x55, 0x55 };
         QByteArray ba((char *)a, 6);
         mSerialPort->write(ba);
     }
