@@ -1,8 +1,10 @@
-﻿#include "commandedit.h"
+﻿#include "QMessageBox"
+#include "commandedit.h"
 #include "QTextStream"
 #include "QDebug"
 #include "QTextCursor"
-
+#include <QMimeData>
+#include "QUrl"
 
 CommandEdit::CommandEdit(QWidget *parent) : QPlainTextEdit(parent), mCommandCounter(0)
 {
@@ -106,3 +108,41 @@ void CommandEdit::keyPressEvent(QKeyEvent *e)
         break;
     }
 }
+
+void CommandEdit::dropEvent(QDropEvent *e)
+{
+    QList <QUrl> url;
+    QString fileName;
+    QString filePath;
+
+    url = e->mimeData()->urls();
+
+    if(url.isEmpty()==true)
+        return;
+
+    if(url.size()>1)
+    {
+        return;
+    }
+
+    fileName = url[0].fileName();
+    filePath = url[0].path();
+
+    qDebug()<<filePath.remove(0,1);
+
+
+    QRegExp rx("\\S*\\.ifw");
+    if(rx.exactMatch(fileName)==false)
+    {
+        QMessageBox::information(this,"info",QStringLiteral("不支持该种类型文件"));
+        return;
+    }
+
+    QTextCursor cursor = this->textCursor();
+    cursor.select(QTextCursor::LineUnderCursor);
+    setTextCursor(cursor);
+    insertPlainText("-> ");
+
+    this->insertPlainText("upgrade "+filePath);
+}
+

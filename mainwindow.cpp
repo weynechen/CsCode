@@ -14,7 +14,7 @@
 #include "QTime"
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), mIsDownloadDone(false), mIsFileSaved(true),mLidarRawDataCounter(0)
+    : QMainWindow(parent), ui(new Ui::MainWindow), mIsDownloadDone(false), mIsFileSaved(true),mLidarRawDataCounter(0),upgradeMsg(FW_NULL)
 {
     ui->setupUi(this);
 
@@ -58,10 +58,6 @@ void MainWindow::closeSerialPort()
 
 void MainWindow::downloadConfig()
 {
-    PackageDataStruct package;
-    u32 len;
-    u8 packageBuffer[8192];
-
     if (mParse->DataToSerial.isEmpty())
     {
         mMsg->appendPlainText("Error:Please compile code first");
@@ -74,36 +70,9 @@ void MainWindow::downloadConfig()
         return;
     }
 
+    sendMassData(ACT_RE_INIT_START, mParse->DataToSerial);
+
     ui->actionDownload->setEnabled(false);
-
-    package.DataID = ACT_RE_INIT_START;
-    package.DataInBuff = (u8*)mParse->DataToSerial.data();
-    package.DataInLen = mParse->DataToSerial.size();
-    package.DataOutBuff = packageBuffer;
-    package.DataOutLen = &len;
-    Package(package);
-
-    u32 times = len/64;
-
-    if(len%64 == 0)
-        mProgress->setMaximum(times);
-    else
-        mProgress->setMaximum(times+1);
-    mProgress->show();
-    for(u32 i=0;i<times;i++)
-    {
-        mSerialPort->write((char *)(packageBuffer+i*64),64);
-        waitSTM32Work(10);
-        mProgress->setValue(i);
-    }
-
-    waitSTM32Work(10);
-    if(len%64!=0)
-    {
-        mProgress->setValue(times+1);
-        mSerialPort->write((char *)(packageBuffer+times*64),len%64);
-    }
-    mProgress->hide();
 
     ui->actionDownload->setEnabled(true);
     mIsDownloadDone = true;
@@ -142,6 +111,43 @@ void MainWindow::sendCmd(quint8 t)
     Package(package);
 
     mSerialPort->write((char*)packageBuffer,len);
+}
+
+void MainWindow::sendMassData(ActionIDTypeDef id , const QByteArray &data)
+{
+    PackageDataStruct package;
+    u32 len;
+    u8 packageBuffer[8192];
+
+    package.DataID = id;
+    package.DataInBuff = (u8*)data.data();
+    package.DataInLen = data.size();
+    package.DataOutBuff = packageBuffer;
+    package.DataOutLen = &len;
+    Package(package);
+
+    u32 times = len/64;
+
+    if(len%64 == 0)
+        mProgress->setMaximum(times);
+    else
+        mProgress->setMaximum(times+1);
+    mProgress->show();
+    for(u32 i=0;i<times;i++)
+    {
+        mSerialPort->write((char *)(packageBuffer+i*64),64);
+        waitSTM32Work(10);
+        mProgress->setValue(i);
+    }
+
+    waitSTM32Work(10);
+    if(len%64!=0)
+    {
+        mProgress->setValue(times+1);
+        mSerialPort->write((char *)(packageBuffer+times*64),len%64);
+    }
+    mProgress->hide();
+
 }
 
 
@@ -214,11 +220,21 @@ void MainWindow::burnConfig()
     mSerialPort->write(ba);
 }
 
+
 void MainWindow::upgradeFirmware(QString str)
 {
+
+    if(mSerialPort->isOpen() == false)
+    {
+        mMsg->appendPlainText("Error:please open serial port first");
+        return;
+    }
+
     QString filePath = str.remove(QRegExp("upgrade +"));
 
-    if(!filePath.contains(QRegExp("*.ifw")))
+    qDebug()<<filePath;
+
+    if(!filePath.contains(QRegExp("ifw")))
     {
         mMsg->appendPlainText("Error:wrong firmware or path");
         return;
@@ -230,17 +246,73 @@ void MainWindow::upgradeFirmware(QString str)
         mMsg->appendPlainText("Error:permssion denied");
         return;
     }
-    sendCmd(ACT_UPDATE_FIRMWARE);
 
-    bool isEnd = false;
-    QTime timeout;
-    timeout.start();
+//    sendCmd(ACT_UPDATE_FIRMWARE);
 
-    while(!isEnd)
+//    QTime timeout;
+//    timeout.start();
+
+//    while(1)
+//    {
+//        if(timeout.elapsed()>5000)
+//        {
+//            mMsg->appendPlainText("Error:timeout");
+//            return;
+//        }
+
+//        if(upgradeMsg == FW_UPGRADE_READY)
+//            break;
+//        QCoreApplication::processEvents();
+//    }
+
+    QList<QByteArray>firmwareData;
+
+    for(int i=0;i<upgradeFile.size();i+=2048)
     {
-
-        QCoreApplication::processEvents();
+        firmwareData<<upgradeFile.read(2048);
     }
+
+    //补齐最后一个QByteArray，使其为4的整数倍(CRC32要求)
+    quint8 lenMod = firmwareData.last().size() % 4;
+    for(int i=0;i<lenMod;i++)
+    {
+        firmwareData.last().append(0xff);
+    }
+
+    qint32 offset=0;
+
+    for(int i=0;i<firmwareData.size();i++)
+    {
+        offset=i*firmwareData[i].size();
+
+        //在前面加上offset
+        firmwareData[i].prepend((char*)&offset,sizeof(offset));
+    }
+
+    //添加结束段,偏移量为-1
+    char trEnd[]={0xff,0xff,0xff,0xff,  0,0,0,0, 0,0,0,0};
+    QByteArray firmwareEnd(trEnd,12);
+    firmwareData.append(firmwareEnd);
+
+    mMsg->appendPlainText("Warning:"+QStringLiteral("更新中，请不要操作软件及断电"));
+    mMsg->appendPlainText(QString("Info:firmware section amount:%1").arg((firmwareData.size())));
+    mMsg->appendPlainText("Info:upgrading section:");
+
+    QTextCursor textCursor(mMsg->textCursor());
+
+    qDebug()<<textCursor.position();
+
+    for(int i=0;i<firmwareData.size();i++)
+    {
+        sendMassData(ACT_UPGRADE_FIRMWARE,firmwareData[i]);
+        mMsg->insertPlainText(QString("%1").arg(i+1,3));
+        textCursor.movePosition(QTextCursor::PreviousCharacter,QTextCursor::MoveAnchor,3);
+
+        mMsg->setTextCursor(textCursor);
+    }
+
+    mMsg->appendPlainText("Warning:"+QStringLiteral("更新完毕，请等待5秒系统重启"));
+
 }
 
 
@@ -548,6 +620,10 @@ void MainWindow::readData()
         mMsg->setTextCursor(textCursor);
         mMsg->insertPlainText(QString(buffer));
 
+        break;
+
+    case ACK_UPGRADE:
+        upgradeMsg = (FirmwareUpgradeType)mRecPackage.DataOutBuff[0];
         break;
 
     default:

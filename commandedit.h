@@ -11,6 +11,8 @@ public:
   CommandEdit(QWidget *parent = 0);
 protected:
   virtual void keyPressEvent(QKeyEvent *e);
+   void dropEvent(QDropEvent *e);
+
 
 private:
   commandHlighter *mCmdLighter;

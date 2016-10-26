@@ -49,8 +49,18 @@ typedef struct
 typedef enum
 {
     ACK_STRING,
+        ACK_UPGRADE,
     ACK_NULL = 0xff,
 }AckDataIDTypeDef;
+
+typedef enum {
+  FW_UPGRADE_READY,
+  FW_CRC_ERROR,
+  FW_FLASH_ERROR,
+  FW_OK,
+  FW_NULL = 0xff,
+} FirmwareUpgradeType;
+
 
 typedef struct
 {

@@ -41,7 +41,7 @@ typedef enum
   ACT_FLASH_PARA,          /*< 固化调试好的参数到Flash*/
   ACT_FLASH_CONFIG_FILE,   /*< 烧录配置文件 */
   ACT_CHANNEL_SEL,         /*< 选择通道 */
-  ACT_UPDATE_FIRMWARE,     /*< 更新固件 */
+  ACT_UPGRADE_FIRMWARE,     /*< 更新固件 */
   ACTION_NULL = 0xff   /*< 空动作*/
 } ActionIDTypeDef;
 

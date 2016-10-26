@@ -64,6 +64,8 @@ private:
     QProgressBar *mProgress;
     bool mIsDownloadDone;
     bool mIsFileSaved;
+    FirmwareUpgradeType upgradeMsg;
+
 
     bool saveToFile(const QString& fileName);
     void loadFile();
@@ -76,6 +78,7 @@ private:
     void restoreCustom();
     void recoverCustom();
     void sendCmd(quint8 t);
+    void sendMassData(ActionIDTypeDef id, const QByteArray &data);
 
 private slots:
     void openFileWithDialog(bool);
@@ -98,6 +101,7 @@ private slots:
 
 protected:
     void closeEvent(QCloseEvent *event);
+
 };
 
 
