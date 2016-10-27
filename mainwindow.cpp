@@ -12,6 +12,7 @@
 #include "protocol/rec.h"
 #include "protocol/transmit.h"
 #include "QTime"
+#include <QCoreApplication>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mIsDownloadDone(false), mIsFileSaved(true),mLidarRawDataCounter(0),upgradeMsg(FW_NULL)
@@ -150,6 +151,36 @@ void MainWindow::sendMassData(ActionIDTypeDef id , const QByteArray &data)
 
 }
 
+void MainWindow::sendUpgradeData(ActionIDTypeDef id , const QByteArray &data , u32 &progress)
+{
+    PackageDataStruct package;
+    u32 len;
+    u8 packageBuffer[8192];
+
+    package.DataID = id;
+    package.DataInBuff = (u8*)data.data();
+    package.DataInLen = data.size();
+    package.DataOutBuff = packageBuffer;
+    package.DataOutLen = &len;
+    Package(package);
+
+    u32 times = len/64;
+
+    for(u32 i=0;i<times;i++)
+    {
+        mSerialPort->write((char *)(packageBuffer+i*64),64);
+        waitSTM32Work(10);
+        mProgress->setValue(progress++);
+    }
+
+    waitSTM32Work(10);
+    if(len%64!=0)
+    {
+        mProgress->setValue(progress++);
+        mSerialPort->write((char *)(packageBuffer+times*64),len%64);
+    }
+}
+
 
 void MainWindow::showVersion()
 {
@@ -232,8 +263,6 @@ void MainWindow::upgradeFirmware(QString str)
 
     QString filePath = str.remove(QRegExp("upgrade +"));
 
-    qDebug()<<filePath;
-
     if(!filePath.contains(QRegExp("ifw")))
     {
         mMsg->appendPlainText("Error:wrong firmware or path");
@@ -247,23 +276,29 @@ void MainWindow::upgradeFirmware(QString str)
         return;
     }
 
-//    sendCmd(ACT_UPDATE_FIRMWARE);
+    sendCmd(ACT_UPGRADE_FIRMWARE);
 
-//    QTime timeout;
-//    timeout.start();
+    QTime timeout;
+    timeout.start();
 
-//    while(1)
-//    {
-//        if(timeout.elapsed()>5000)
-//        {
-//            mMsg->appendPlainText("Error:timeout");
-//            return;
-//        }
+    while(1)
+    {
 
-//        if(upgradeMsg == FW_UPGRADE_READY)
-//            break;
-//        QCoreApplication::processEvents();
-//    }
+        QCoreApplication::processEvents();
+
+        if(timeout.elapsed()>5000)
+        {
+            mMsg->appendPlainText("Error:timeout");
+            return;
+        }
+
+        if(upgradeMsg == FW_UPGRADE_READY)
+        {
+            upgradeMsg = FW_NULL;
+            break;
+        }
+
+    }
 
     QList<QByteArray>firmwareData;
 
@@ -295,23 +330,87 @@ void MainWindow::upgradeFirmware(QString str)
     firmwareData.append(firmwareEnd);
 
     mMsg->appendPlainText("Warning:"+QStringLiteral("更新中，请不要操作软件及断电"));
-    mMsg->appendPlainText(QString("Info:firmware section amount:%1").arg((firmwareData.size())));
-    mMsg->appendPlainText("Info:upgrading section:");
+    mMsg->appendPlainText("Info:upgrading...");
 
-    QTextCursor textCursor(mMsg->textCursor());
-
-    qDebug()<<textCursor.position();
+    u32 sectionAmount = 0;
 
     for(int i=0;i<firmwareData.size();i++)
     {
-        sendMassData(ACT_UPGRADE_FIRMWARE,firmwareData[i]);
-        mMsg->insertPlainText(QString("%1").arg(i+1,3));
-        textCursor.movePosition(QTextCursor::PreviousCharacter,QTextCursor::MoveAnchor,3);
+        PackageDataStruct package;
+        u32 len;
+        u8 packageBuffer[8192];
 
-        mMsg->setTextCursor(textCursor);
+        package.DataID = ACT_UPGRADE_FIRMWARE;
+        package.DataInBuff = (u8*)firmwareData[i].data();
+        package.DataInLen = firmwareData[i].size();
+        package.DataOutBuff = packageBuffer;
+        package.DataOutLen = &len;
+        Package(package);
+
+        sectionAmount += len/64;
+
+        if(len%64 != 0)
+            sectionAmount++;
     }
 
-    mMsg->appendPlainText("Warning:"+QStringLiteral("更新完毕，请等待5秒系统重启"));
+
+    ui->actionCloseSerial->setEnabled(false);
+    ui->actionBurnConfig->setEnabled(false);
+    ui->actionDownload->setEnabled(false);
+    ui->actionFlash->setEnabled(false);
+    ui->actionOpenSerial->setEnabled(false);
+
+    mProgress->show();
+    mProgress->setMaximum(sectionAmount);
+    u32 progress=0;
+    bool result = true;
+    for(int i=0;i<firmwareData.size();i++)
+    {
+        sendUpgradeData(ACT_UPGRADE_FIRMWARE,firmwareData[i],progress);
+
+        timeout.restart();
+        while(result)
+        {
+            QCoreApplication::processEvents();
+
+            if(timeout.elapsed()>5000)
+            {
+                mMsg->appendPlainText("Error:timeout");
+                result = false;
+                break;
+            }
+
+            if(upgradeMsg == FW_UPGRADE_READY)
+            {
+                upgradeMsg = FW_NULL;
+                break;
+            }
+
+            if(upgradeMsg == FW_CRC_ERROR)
+            {
+                mMsg->appendPlainText("Error:Data error , please check connecton");
+                upgradeMsg = FW_NULL;
+                result = false;
+                break;
+            }
+        }
+
+        if(result == false)
+        {
+            break;
+        }
+    }
+    mProgress->hide();
+
+    ui->actionCloseSerial->setEnabled(true);
+    ui->actionBurnConfig->setEnabled(true);
+    ui->actionDownload->setEnabled(true);
+    ui->actionFlash->setEnabled(true);
+    ui->actionOpenSerial->setEnabled(true);
+
+
+    if(result == true)
+        mMsg->appendPlainText("Warning:"+QStringLiteral("更新完毕，请不要断电，等待系统重启"));
 
 }
 

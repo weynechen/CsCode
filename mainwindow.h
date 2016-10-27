@@ -79,6 +79,7 @@ private:
     void recoverCustom();
     void sendCmd(quint8 t);
     void sendMassData(ActionIDTypeDef id, const QByteArray &data);
+    void sendUpgradeData(ActionIDTypeDef id , const QByteArray &data , u32 &progress);
 
 private slots:
     void openFileWithDialog(bool);
