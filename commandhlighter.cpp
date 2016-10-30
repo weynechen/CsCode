@@ -13,7 +13,7 @@ commandHlighter::commandHlighter(QTextDocument *t) : QSyntaxHighlighter(t)
     command.setForeground(QColor(0, 0, 180));
     command.setFontWeight(QFont::Bold);
     commandList << "search com" << "\\bconnect\\b" << "disconnect" << "\\bexit\\b" << "\\bclear\\b" << "\\bhelp\\b"
-                << "read" << "send" << "pattern\\s*=\\s*\\d+\\s*"<<"\\bupgrade\\b";
+                << "read" << "send" << "pattern\\s*=\\s*\\d+\\s*"<<"\\bupgrade\\b"<<"\\breboot\\b";
 }
 
 

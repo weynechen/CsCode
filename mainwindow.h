@@ -18,6 +18,8 @@
 #include "QTimer"
 
 #define MAX_DATA_AMOUTN_PER_FRAME 8192
+#define PID 0x5739
+#define VID 0x0483
 namespace Ui {
 class MainWindow;
 }
@@ -36,6 +38,7 @@ public:
     void help(QString);
     void setPattern(QString s);
     void upgradeFirmware(QString str);
+    void reboot(QString);
 
 private:
     Ui::MainWindow *ui;
@@ -65,7 +68,8 @@ private:
     bool mIsDownloadDone;
     bool mIsFileSaved;
     FirmwareUpgradeType upgradeMsg;
-
+    QTimer *mPollUSBStatusTimer;
+    qint8 mHeartbeats;
 
     bool saveToFile(const QString& fileName);
     void loadFile();
@@ -99,6 +103,7 @@ private slots:
     void trImageToBin();
     void createNewFile();
     void burnConfig();
+    void pollUSBStatus();
 
 protected:
     void closeEvent(QCloseEvent *event);

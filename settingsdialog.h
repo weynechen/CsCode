@@ -1,4 +1,4 @@
-/****************************************************************************
+﻿/****************************************************************************
 **
 ** Copyright (C) 2012 Denis Shienkov <denis.shienkov@gmail.com>
 ** Copyright (C) 2012 Laszlo Papp <lpapp@kde.org>
@@ -69,6 +69,8 @@ public:
     QSerialPort::FlowControl flowControl;
     QString                  stringFlowControl;
     bool                     localEchoEnabled;
+    quint16 pid;
+    quint16 vid;
   };
 
   explicit SettingsDialog(QWidget *parent = 0);

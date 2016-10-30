@@ -13,6 +13,7 @@
 #include "protocol/transmit.h"
 #include "QTime"
 #include <QCoreApplication>
+#include "QSerialPortInfo"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mIsDownloadDone(false), mIsFileSaved(true),mLidarRawDataCounter(0),upgradeMsg(FW_NULL)
@@ -53,6 +54,7 @@ void MainWindow::closeSerialPort()
     pS.setColor(QPalette::WindowText, Qt::darkRed);
     mSerialPortStatus->setPalette(pS);
 
+    mPollUSBStatusTimer->stop();
     mSerialPortStatus->setText(tr("Disconnected"));
 }
 
@@ -251,6 +253,19 @@ void MainWindow::burnConfig()
     mSerialPort->write(ba);
 }
 
+void MainWindow::pollUSBStatus()
+{
+    if(mHeartbeats <= 0)
+    {
+        mHeartbeats = 3;
+        this->closeSerialPort();
+    }
+    else
+    {
+        mHeartbeats--;
+    }
+}
+
 
 void MainWindow::upgradeFirmware(QString str)
 {
@@ -286,7 +301,7 @@ void MainWindow::upgradeFirmware(QString str)
 
         QCoreApplication::processEvents();
 
-        if(timeout.elapsed()>5000)
+        if(timeout.elapsed()>10000)
         {
             mMsg->appendPlainText("Error:timeout");
             return;
@@ -307,7 +322,7 @@ void MainWindow::upgradeFirmware(QString str)
         firmwareData<<upgradeFile.read(2048);
     }
 
-    //补齐最后一个QByteArray，使其为4的整数倍(CRC32要求)
+    //补齐最后一个QByteArray，使其为4的整数倍
     quint8 lenMod = firmwareData.last().size() % 4;
     for(int i=0;i<lenMod;i++)
     {
@@ -318,7 +333,10 @@ void MainWindow::upgradeFirmware(QString str)
 
     for(int i=0;i<firmwareData.size();i++)
     {
-        offset=i*firmwareData[i].size();
+        if(i == 0)
+            offset = 0;
+        else
+            offset += (firmwareData[i-1].size() - sizeof(offset));
 
         //在前面加上offset
         firmwareData[i].prepend((char*)&offset,sizeof(offset));
@@ -364,18 +382,20 @@ void MainWindow::upgradeFirmware(QString str)
     mProgress->setMaximum(sectionAmount);
     u32 progress=0;
     bool result = true;
+    bool isEnd = false;
     for(int i=0;i<firmwareData.size();i++)
     {
         sendUpgradeData(ACT_UPGRADE_FIRMWARE,firmwareData[i],progress);
 
         timeout.restart();
-        while(result)
+        while(!isEnd)
         {
             QCoreApplication::processEvents();
 
             if(timeout.elapsed()>5000)
             {
                 mMsg->appendPlainText("Error:timeout");
+                isEnd = true;
                 result = false;
                 break;
             }
@@ -386,19 +406,23 @@ void MainWindow::upgradeFirmware(QString str)
                 break;
             }
 
-            if(upgradeMsg == FW_CRC_ERROR)
+            if(upgradeMsg == FW_OK)
             {
-                mMsg->appendPlainText("Error:Data error , please check connecton");
                 upgradeMsg = FW_NULL;
-                result = false;
-                break;
+                isEnd = true;
             }
-        }
 
-        if(result == false)
-        {
-            break;
+            if(upgradeMsg == FW_FLASH_ERROR)
+            {
+                upgradeMsg = FW_NULL;
+                isEnd = true;
+                result = false;
+            }
+
         }
+        if(isEnd == true)
+            break;
+
     }
     mProgress->hide();
 
@@ -408,10 +432,21 @@ void MainWindow::upgradeFirmware(QString str)
     ui->actionFlash->setEnabled(true);
     ui->actionOpenSerial->setEnabled(true);
 
+    if(result)
+    {
+        mMsg->appendPlainText("Warning:"+QStringLiteral("升级完毕，请不要断电，等待系统重启"));
+        mMsg->appendPlainText("Warning:"+QStringLiteral("重启后请检查版本号是否正确"));
+    }
+    else
+    {
+        mMsg->appendPlainText("Error:"+QStringLiteral("升级错误，请重启后重试"));
+    }
+}
 
-    if(result == true)
-        mMsg->appendPlainText("Warning:"+QStringLiteral("更新完毕，请不要断电，等待系统重启"));
-
+void MainWindow::reboot(QString)
+{
+    sendCmd(ACT_REBOOT);
+    waitSTM32Work(50);
 }
 
 
@@ -442,6 +477,7 @@ void MainWindow::openSerialPort()
     {
         disconnect(mSerialPort, SIGNAL(readyRead()), this, SLOT(readData()));
         mSerialPort->close();
+        mPollUSBStatusTimer->stop();
     }
 
     SettingsDialog::Settings p = mSerialPortSettingDialog->settings();
@@ -451,6 +487,7 @@ void MainWindow::openSerialPort()
     mSerialPort->setParity(p.parity);
     mSerialPort->setStopBits(p.stopBits);
     mSerialPort->setFlowControl(p.flowControl);
+
     QPalette pS;
     pS.setColor(QPalette::WindowText, Qt::darkBlue);
     mSerialPortStatus->setPalette(pS);
@@ -464,6 +501,13 @@ void MainWindow::openSerialPort()
                                    .arg(p.stringParity)
                                    .arg(p.stringStopBits)
                                    .arg(p.stringFlowControl));
+
+        connect(mSerialPort, SIGNAL(readyRead()), this, SLOT(readData()));
+
+        if((p.vid == VID) && (p.pid == PID))
+        {
+            mPollUSBStatusTimer->start(200);
+        }
     }
     else
     {
@@ -541,10 +585,12 @@ void MainWindow::initSerialPort()
             SLOT(show()));
     connect(mSerialPortSettingDialog, SIGNAL(comReady()), this,
             SLOT(openSerialPort()));
-    connect(mSerialPort, SIGNAL(readyRead()), this, SLOT(readData()));
     connect(mSerialPort, SIGNAL(error(QSerialPort::SerialPortError)), this,
             SLOT(handleError(QSerialPort::SerialPortError)));
 
+    mHeartbeats = 3;
+    mPollUSBStatusTimer = new QTimer(this);
+    connect(mPollUSBStatusTimer,SIGNAL(timeout()),this,SLOT(pollUSBStatus()));
 }
 
 void MainWindow::initEdit()
@@ -573,7 +619,8 @@ void MainWindow::initEdit()
     mCommandList << command_type("help", &MainWindow::help)
                  << command_type("clear", &MainWindow::clearCmd)
                  << command_type("pattern", &MainWindow::setPattern)
-                 << command_type("upgrade", &MainWindow::upgradeFirmware);
+                 << command_type("upgrade", &MainWindow::upgradeFirmware)
+                 << command_type("reboot",&MainWindow::reboot);
 
     connect(mCommandEdit, SIGNAL(command(QString)), this, SLOT(parseCommand(QString)));
 
@@ -729,6 +776,7 @@ void MainWindow::readData()
         break;
     }
 
+    mHeartbeats = 3;
     mRecPackage.DataID = ACK_NULL;
 }
 

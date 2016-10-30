@@ -94,7 +94,10 @@ void SettingsDialog::showPortInfo(int idx)
     ui->serialNumberLabel->setText(tr("Serial number: %1").arg(list.count() > 3 ? list.at(3) : tr(blankString)));
     ui->locationLabel->setText(tr("Location: %1").arg(list.count() > 4 ? list.at(4) : tr(blankString)));
     ui->vidLabel->setText(tr("Vendor Identifier: %1").arg(list.count() > 5 ? list.at(5) : tr(blankString)));
+    bool ok;
+    currentSettings.vid = list.count() > 5 ? list.at(5).toUInt(&ok,16):0;
     ui->pidLabel->setText(tr("Product Identifier: %1").arg(list.count() > 6 ? list.at(6) : tr(blankString)));
+    currentSettings.pid = list.count() > 6 ? list.at(6).toUInt(&ok,16):0;
 }
 
 
