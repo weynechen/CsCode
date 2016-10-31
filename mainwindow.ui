@@ -151,6 +151,7 @@ background-color: rgb(235, 243, 255);
     </property>
     <addaction name="actionImageToBin"/>
     <addaction name="actionBurnConfig"/>
+    <addaction name="actionUpgrade"/>
    </widget>
    <addaction name="menu"/>
    <addaction name="menu_2"/>
@@ -343,6 +344,11 @@ background-color: rgb(235, 243, 255);
   <action name="actionBurnConfig">
    <property name="text">
     <string>烧录配置</string>
+   </property>
+  </action>
+  <action name="actionUpgrade">
+   <property name="text">
+    <string>升级固件</string>
    </property>
   </action>
  </widget>

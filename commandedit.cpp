@@ -131,7 +131,7 @@ void CommandEdit::dropEvent(QDropEvent *e)
     qDebug()<<filePath.remove(0,1);
 
 
-    QRegExp rx("\\S*\\.ifw");
+    QRegExp rx("\\S*\\.cfw");
     if(rx.exactMatch(fileName)==false)
     {
         QMessageBox::information(this,"info",QStringLiteral("不支持该种类型文件"));

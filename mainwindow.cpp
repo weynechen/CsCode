@@ -266,6 +266,26 @@ void MainWindow::pollUSBStatus()
     }
 }
 
+void MainWindow::openUpgradeDialog()
+{
+    QString fileName = QFileDialog::getOpenFileName(
+                this, "Open file", mFirmwarePath, "firmware(*.cfw)");
+
+    if (fileName.isEmpty())
+    {
+        return;
+    }
+
+    mFirmwarePath = fileName;
+
+    QTextCursor cursor = this->mCommandEdit->textCursor();
+    cursor.select(QTextCursor::LineUnderCursor);
+    this->mCommandEdit->setTextCursor(cursor);
+    this->mCommandEdit->insertPlainText("-> ");
+
+    this->mCommandEdit->insertPlainText("upgrade "+fileName);
+}
+
 
 void MainWindow::upgradeFirmware(QString str)
 {
@@ -278,7 +298,9 @@ void MainWindow::upgradeFirmware(QString str)
 
     QString filePath = str.remove(QRegExp("upgrade +"));
 
-    if(!filePath.contains(QRegExp("ifw")))
+    mFirmwarePath = filePath;
+
+    if(!filePath.contains(QRegExp("cfw")))
     {
         mMsg->appendPlainText("Error:wrong firmware or path");
         return;
@@ -446,6 +468,12 @@ void MainWindow::upgradeFirmware(QString str)
 void MainWindow::reboot(QString)
 {
     sendCmd(ACT_REBOOT);
+    waitSTM32Work(50);
+}
+
+void MainWindow::getFirmwareVersion(QString)
+{
+    sendCmd(ACT_GET_VERSION);
     waitSTM32Work(50);
 }
 
@@ -620,10 +648,11 @@ void MainWindow::initEdit()
                  << command_type("clear", &MainWindow::clearCmd)
                  << command_type("pattern", &MainWindow::setPattern)
                  << command_type("upgrade", &MainWindow::upgradeFirmware)
-                 << command_type("reboot",&MainWindow::reboot);
+                 << command_type("reboot",&MainWindow::reboot)
+                 << command_type("get-version",&MainWindow::getFirmwareVersion);
 
     connect(mCommandEdit, SIGNAL(command(QString)), this, SLOT(parseCommand(QString)));
-
+    connect(mCommandEdit,SIGNAL(textChanged()),this->mCommandEdit,SLOT(setFocus()));
 }
 
 void MainWindow::initStatusBar()
@@ -689,6 +718,7 @@ void MainWindow::initAction()
             SLOT(trImageToBin()));
     connect(ui->actionNew, SIGNAL(triggered(bool)), this, SLOT(createNewFile()));
     connect(ui->actionBurnConfig, SIGNAL(triggered(bool)), mUpdateConfig, SLOT(show()));
+    connect(ui->actionUpgrade,SIGNAL(triggered(bool)),this,SLOT(openUpgradeDialog()));
 
     //刚开始禁用保存
     ui->actionSaveFile->setEnabled(false);
@@ -710,6 +740,7 @@ void MainWindow::restoreCustom()
 
     //存储文件路径
     settings.setValue("filePath", mSavedFilePath);
+    settings.setValue("mFirmwarePath", mFirmwarePath);
     settings.setValue("imagePath", mImagePath);
     settings.setValue("configFilePath", mUpdateConfig->configFilePath);
 
@@ -742,6 +773,7 @@ void MainWindow::recoverCustom()
     mUpdateConfig->configFilePath = settings.value("configFilePath").toString();
     mSavedFilePath = settings.value("filePath").toString();
     mImagePath = settings.value("imagePath").toString();
+    mFirmwarePath = settings.value("mFirmwarePath").toString();
     loadFile();
 }
 

@@ -39,6 +39,7 @@ public:
     void setPattern(QString s);
     void upgradeFirmware(QString str);
     void reboot(QString);
+    void getFirmwareVersion(QString);
 
 private:
     Ui::MainWindow *ui;
@@ -70,6 +71,7 @@ private:
     FirmwareUpgradeType upgradeMsg;
     QTimer *mPollUSBStatusTimer;
     qint8 mHeartbeats;
+    QString mFirmwarePath;
 
     bool saveToFile(const QString& fileName);
     void loadFile();
@@ -104,6 +106,7 @@ private slots:
     void createNewFile();
     void burnConfig();
     void pollUSBStatus();
+    void openUpgradeDialog();
 
 protected:
     void closeEvent(QCloseEvent *event);
