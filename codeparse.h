@@ -44,6 +44,7 @@ typedef enum
   ACT_UPGRADE_FIRMWARE,     /*< 更新固件 */
   ACT_REBOOT,
     ACT_GET_VERSION,
+    ACT_READ_SSD2828,
   ACTION_NULL = 0xff   /*< 空动作*/
 } ActionIDTypeDef;
 

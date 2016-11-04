@@ -104,7 +104,7 @@ void MainWindow::sendCmd(quint8 t)
     PackageDataStruct package;
     u32 len;
     u8 data=0;
-    u8 packageBuffer[8192];
+    u8 packageBuffer[64];
 
     package.DataID = t;
     package.DataInBuff = (u8*)&data;
@@ -115,6 +115,29 @@ void MainWindow::sendCmd(quint8 t)
 
     mSerialPort->write((char*)packageBuffer,len);
 }
+
+void MainWindow::sendCmd(quint8 id , quint8 data)
+{
+    if (!mSerialPort->isOpen())
+    {
+        mMsg->appendPlainText("Error:Please open serial port first");
+        return;
+    }
+
+    PackageDataStruct package;
+    u32 len;
+    u8 packageBuffer[64];
+
+    package.DataID = id;
+    package.DataInBuff = (u8*)&data;
+    package.DataInLen = sizeof(data);
+    package.DataOutBuff = packageBuffer;
+    package.DataOutLen = &len;
+    Package(package);
+
+    mSerialPort->write((char*)packageBuffer,len);
+}
+
 
 void MainWindow::sendMassData(ActionIDTypeDef id , const QByteArray &data)
 {
@@ -477,6 +500,21 @@ void MainWindow::getFirmwareVersion(QString)
     waitSTM32Work(50);
 }
 
+void MainWindow::readSSD2828(QString str)
+{
+    str.remove(QRegExp("read-ssd2828\\s+"));
+    bool ok;
+    quint8 para = str.toInt(&ok,16);
+    if(ok)
+    {
+        sendCmd(ACT_READ_SSD2828,para);
+    }
+    else
+    {
+        mMsg->appendPlainText("Error:Wrong parameter");
+    }
+}
+
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
@@ -649,6 +687,7 @@ void MainWindow::initEdit()
                  << command_type("pattern", &MainWindow::setPattern)
                  << command_type("upgrade", &MainWindow::upgradeFirmware)
                  << command_type("reboot",&MainWindow::reboot)
+                 << command_type("read-ssd2828",&MainWindow::readSSD2828)
                  << command_type("get-version",&MainWindow::getFirmwareVersion);
 
     connect(mCommandEdit, SIGNAL(command(QString)), this, SLOT(parseCommand(QString)));

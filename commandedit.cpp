@@ -18,6 +18,9 @@ CommandEdit::CommandEdit(QWidget *parent) : QPlainTextEdit(parent), mCommandCoun
     //    this->setPalette(p);
 
     this->setPlainText("-> ");
+    QTextCursor textCursor(this->document());
+    textCursor.movePosition(QTextCursor::End);
+    this->setTextCursor(textCursor);
     mCmdLighter = new commandHlighter(this->document());
 }
 

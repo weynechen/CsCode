@@ -40,6 +40,7 @@ public:
     void upgradeFirmware(QString str);
     void reboot(QString);
     void getFirmwareVersion(QString);
+    void readSSD2828(QString str);
 
 private:
     Ui::MainWindow *ui;
@@ -84,6 +85,7 @@ private:
     void restoreCustom();
     void recoverCustom();
     void sendCmd(quint8 t);
+    void sendCmd(quint8 id , quint8 data);
     void sendMassData(ActionIDTypeDef id, const QByteArray &data);
     void sendUpgradeData(ActionIDTypeDef id , const QByteArray &data , u32 &progress);
 
