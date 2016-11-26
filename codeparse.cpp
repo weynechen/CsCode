@@ -7,7 +7,7 @@
 CodeParse::CodeParse(QObject *parent) : QObject(parent), mPower(0), mBacklight(0), mMaxCurrent(150)
 {
     mTitleStr << "project name" << "power" << "backlight" << "LCD parameter" << "MIPI setting" << "LCD initial code" << "pattern" << "auto run";
-    mPowerStr << "1.8V" << "2.8V" << "3.3V" << "5V" << "-5V";
+    mPowerStr << "1.8V" << "2.8V" << "3.3V" << "VSP" << "VSN"<<"5V"<<"MTP";
     mLcdParaStr << "pix clock" << "horizontal resolution" << "vertical resolution" << "horizontal back porch"
                << "horizontal front porch" << "horizontal sync pulse width" << "vertical back porch" << "vertical front porch"
                << "vertical sync pulse width";
@@ -43,7 +43,7 @@ bool CodeParse::parsePower(QString data)
         return false;
     }
     data.replace(QRegExp("\\n+"), "\n");
-    QRegExp rx("-?\\d.?\\d?V");
+    //QRegExp rx("-?\\d.?\\d?V");
     QTextStream ts(&data);
     QString strLine;
     mSystemConfig.PowerSettings = 0;
@@ -51,9 +51,9 @@ bool CodeParse::parsePower(QString data)
     {
         strLine = ts.readLine();
         strLine.remove(QRegExp("\\s+"));    //删除空格
-        bool match = rx.exactMatch(strLine);
-        if (match)
-        {
+       // bool match = rx.exactMatch(strLine);
+        //if (match)
+        //{
             switch (mPowerStr.indexOf(QRegExp(strLine)))
             {
             case 0:
@@ -77,17 +77,26 @@ bool CodeParse::parsePower(QString data)
                 mSystemConfig.PowerSettings |= 0x10;
                 break;
 
+            case 5:
+                mSystemConfig.PowerSettings |= 0x20;
+                break;
+
+            case 6:
+                mSystemConfig.PowerSettings |= 0x40;
+                break;
+
+
             default:
 
                 emit Info("Error:power error");
                 return false;
             }
-        }
-        else
-        {
-            emit Info("Error:power error");
-            return false;
-        }
+        //}
+//        else
+//        {
+//            emit Info("Error:power error");
+//            return false;
+//        }
     }
     return true;
 }
