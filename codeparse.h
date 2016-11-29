@@ -34,18 +34,20 @@ typedef struct
  */
 typedef enum
 {
-  ACT_RE_INIT_START,       /*< 重新初始化开始标志*/
-  ACT_LCD_READ,            /*< 回读LCD寄存器，高速*/
-  ACT_LCD_WRITE,           /*< 写LCD寄存器，高速模式*/
-  ACT_SET_FRAME,           /*< 选择显示的画面*/
-  ACT_FLASH_PARA,          /*< 固化调试好的参数到Flash*/
-  ACT_FLASH_CONFIG_FILE,   /*< 烧录配置文件 */
-  ACT_CHANNEL_SEL,         /*< 选择通道 */
-  ACT_UPGRADE_FIRMWARE,     /*< 更新固件 */
-  ACT_REBOOT,
+    ACT_RE_INIT_START,     /*< 重新初始化开始标志*/
+    ACT_LCD_READ,          /*< 回读LCD寄存器，高速*/
+    ACT_LCD_WRITE,         /*< 写LCD寄存器，高速模式*/
+    ACT_SET_FRAME,         /*< 选择显示的画面*/
+    ACT_FLASH_PARA,        /*< 固化调试好的参数到Flash*/
+    ACT_FLASH_CONFIG_FILE, /*< 烧录配置文件 */
+    ACT_CHANNEL_SEL,       /*< 选择通道 */
+    ACT_UPGRADE_FIRMWARE,  /*< 更新固件 */
+    ACT_REBOOT,
     ACT_GET_VERSION,
     ACT_READ_SSD2828,
-  ACTION_NULL = 0xff   /*< 空动作*/
+    ACT_SET_SSD2828,
+    ACT_RESET_SSD2828,
+      ACT_TOGGLE_LCD_POWER,
 } ActionIDTypeDef;
 
 /**

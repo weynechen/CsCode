@@ -41,6 +41,7 @@ public:
     void reboot(QString);
     void getFirmwareVersion(QString);
     void readSSD2828(QString str);
+    void toggleLcdPower(QString);
 
 private:
     Ui::MainWindow *ui;

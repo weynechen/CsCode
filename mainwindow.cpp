@@ -515,6 +515,11 @@ void MainWindow::readSSD2828(QString str)
     }
 }
 
+void MainWindow::toggleLcdPower(QString)
+{
+    sendCmd(ACT_TOGGLE_LCD_POWER);
+}
+
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
@@ -688,7 +693,8 @@ void MainWindow::initEdit()
                  << command_type("upgrade", &MainWindow::upgradeFirmware)
                  << command_type("reboot",&MainWindow::reboot)
                  << command_type("read-ssd2828",&MainWindow::readSSD2828)
-                 << command_type("get-version",&MainWindow::getFirmwareVersion);
+                 << command_type("get-version",&MainWindow::getFirmwareVersion)
+                 << command_type("toggle-lcd-power",&MainWindow::toggleLcdPower);
 
     connect(mCommandEdit, SIGNAL(command(QString)), this, SLOT(parseCommand(QString)));
     connect(mCommandEdit,SIGNAL(textChanged()),this->mCommandEdit,SLOT(setFocus()));

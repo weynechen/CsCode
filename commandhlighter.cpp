@@ -14,7 +14,7 @@ commandHlighter::commandHlighter(QTextDocument *t) : QSyntaxHighlighter(t)
     command.setFontWeight(QFont::Bold);
     commandList << "search com" << "\\bconnect\\b" << "disconnect" << "\\bexit\\b" << "\\bclear\\b" << "\\bhelp\\b"
                 << "read" << "send" << "pattern\\s*=\\s*\\d+\\s*"<<"\\bupgrade\\b"<<"\\breboot\\b"<<"\\bget-version\\b"
-                 <<"\\bread-ssd2828\\b"  ;
+                 <<"\\bread-ssd2828\\b"<<"toggle-lcd-power"  ;
 }
 
 
