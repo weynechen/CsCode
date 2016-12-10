@@ -575,7 +575,7 @@ void MainWindow::openSerialPort()
 
         connect(mSerialPort, SIGNAL(readyRead()), this, SLOT(readData()));
 
-        if((p.vid == VID) && (p.pid == PID))
+        if((p.vid == VID) && ((p.pid == PID1) || (p.pid == PID2)))
         {
             mPollUSBStatusTimer->start(200);
         }

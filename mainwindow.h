@@ -18,7 +18,8 @@
 #include "QTimer"
 
 #define MAX_DATA_AMOUTN_PER_FRAME 8192
-#define PID 0x5738
+#define PID1 0x5738
+#define PID2 0x5739
 #define VID 0x0483
 namespace Ui {
 class MainWindow;
