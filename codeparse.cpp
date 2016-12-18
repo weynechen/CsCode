@@ -426,6 +426,12 @@ bool CodeParse::parsePattern(QString data)
             }
         }
 
+
+        if (s.contains(QRegExp("^ShowID\\s*")))
+        {
+            pattern << SHOW_ID;
+        }
+
         if (s.contains(QRegExp("^stay\\s+")))
         {
             pattern << PATTERN_STAY;
@@ -438,6 +444,8 @@ bool CodeParse::parsePattern(QString data)
                 return false;
             }
         }
+
+
 
         if (s.contains(QRegExp("^PIC\\s+")))
         {
@@ -521,8 +529,8 @@ bool CodeParse::parsePattern(QString data)
     {
         mSystemConfig.Pattern[i + 2] = pattern[i];
     }
-    qDebug() << pattern.size();
-    qDebug() << hex << pattern;
+    //qDebug() << pattern.size();
+    //qDebug() << hex << pattern;
     return true;
 }
 
