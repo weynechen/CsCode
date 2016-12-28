@@ -27,6 +27,7 @@ typedef struct
   uint8_t Pattern[PATTERN_LEN];          /*< pattern 设置 */
   uint8_t ProjectName[MAX_NAME_LEN];     /*< 项目名称设置 */
   uint8_t IsAutoRun;                     /*< 是否自动跑 */
+  uint8_t LcdType;
 } ConfigTypeDef;
 
 /**
@@ -47,7 +48,7 @@ typedef enum
     ACT_READ_SSD2828,
     ACT_SET_SSD2828,
     ACT_RESET_SSD2828,
-      ACT_TOGGLE_LCD_POWER,
+    ACT_SET_KEY,
 } ActionIDTypeDef;
 
 /**
@@ -60,6 +61,11 @@ typedef enum
   IF_UART3,
 } InterfaceTypeDef;
 
+typedef enum
+{
+    MIPI_LCD,
+    RGB_LCD,
+}LcdTypeDef;
 
 class CodeParse : public QObject
 {
@@ -97,6 +103,18 @@ private:
     MIPI_READ,
     MIPI_END
   } mipi_type;
+
+  typedef enum
+  {
+      RGB_START,
+      RGB_SPI_RISING,
+      RGB_SPI_FALLING,
+      RGB_DELAY,
+      RGB_WRITE,
+      RGB_READ,
+      RGB_END
+  }RGBTypeDef;
+
   typedef enum
   {
     PATTERN_START,
@@ -129,10 +147,13 @@ public:
   bool parsePower(QString data);
   bool parseBacklight(QString data);
   bool parseLcdPara(QString data);
-  bool parseLcdInit(QString data);
+  bool parseMipiLcdInit(QString data);
   bool parseMipi(QString data);
   bool parsePattern(QString data);
   bool parseAutoRun(QString data);
+  bool parseLcdType(QString data);
+  bool parseRGBLcdInit(QString data);
+
   bool compile(void);
   void updateStr(QString& str);
 

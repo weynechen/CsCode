@@ -35,6 +35,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     initAction();
     recoverCustom();
+    mMsg->appendPlainText("Current Version:V2.2.2\nUpdate date:2016.12.28\n");
+
 }
 
 
@@ -209,7 +211,7 @@ void MainWindow::sendUpgradeData(ActionIDTypeDef id , const QByteArray &data , u
 
 void MainWindow::showVersion()
 {
-    QMessageBox::about(this, "verison", QStringLiteral("当前版本\nV2.2.0"));
+    QMessageBox::about(this, "verison", QStringLiteral("作者: Weyne Chen"));
 }
 
 
@@ -262,18 +264,12 @@ void MainWindow::burnConfig()
         return;
     }
 
-    mSerialPort->write(mUpdateConfig->configData);
+    sendMassData(ACT_RE_INIT_START, mUpdateConfig->configData);
 
     waitSTM32Work(500);
 
-    const quint8 a[] = { 0, 4, IF_UART1,ACT_FLASH_PARA};
-    QByteArray ba((char *)a,4);
+    sendCmd(ACT_FLASH_PARA);
 
-    //crc32
-    crc config_crc;
-    config_crc.appendCrc(ba);
-
-    mSerialPort->write(ba);
 }
 
 void MainWindow::pollUSBStatus()
@@ -515,9 +511,42 @@ void MainWindow::readSSD2828(QString str)
     }
 }
 
-void MainWindow::toggleLcdPower(QString)
+void MainWindow::toggleLcdPower(QString str)
 {
-    sendCmd(ACT_TOGGLE_LCD_POWER);
+    str.remove(QRegExp("set-key\\s+"));
+    enum _Key
+    {
+        KEY_UP = 0,
+        KEY_DOWN,
+        KEY_POWER,
+        KEY_MTP,
+        KEY_NULL = 0xff,
+    } key = KEY_NULL;
+
+    if((str == "UP") || (str =="up"))
+    {
+        key = KEY_UP;
+    }
+    else if((str == "DOWN") || (str =="down"))
+    {
+        key = KEY_DOWN;
+    }
+    else if((str == "power") || (str =="POWER"))
+    {
+        key = KEY_POWER;
+    }
+    else if((str == "MTP") || (str =="mtp"))
+    {
+        key = KEY_MTP;
+    }
+    else
+    {
+        key = KEY_NULL;
+    }
+
+    qDebug()<<(quint8)key;
+
+    sendCmd(ACT_SET_KEY,(quint8)key);
 }
 
 
@@ -694,7 +723,7 @@ void MainWindow::initEdit()
                  << command_type("reboot",&MainWindow::reboot)
                  << command_type("read-ssd2828",&MainWindow::readSSD2828)
                  << command_type("get-version",&MainWindow::getFirmwareVersion)
-                 << command_type("toggle-lcd-power",&MainWindow::toggleLcdPower);
+                 << command_type("set-key",&MainWindow::toggleLcdPower);
 
     connect(mCommandEdit, SIGNAL(command(QString)), this, SLOT(parseCommand(QString)));
     connect(mCommandEdit,SIGNAL(textChanged()),this->mCommandEdit,SLOT(setFocus()));

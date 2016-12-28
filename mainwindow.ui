@@ -304,7 +304,7 @@ background-color: rgb(235, 243, 255);
   </action>
   <action name="actionVersion">
    <property name="text">
-    <string>版本</string>
+    <string>作者</string>
    </property>
   </action>
   <action name="actionImageToBin">
