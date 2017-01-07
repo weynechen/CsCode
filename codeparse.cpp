@@ -198,7 +198,7 @@ bool CodeParse::parseLcdPara(QString data)
 }
 
 
-bool CodeParse::parseMipiLcdInit(QString data)
+bool CodeParse::parseMipiOr8BitRGBLcdInit(QString data)
 {
     QRegExp rxDec("\\d+");
     QRegExp rxHex("0x[0-9A-Fa-f]+");
@@ -228,11 +228,11 @@ bool CodeParse::parseMipiLcdInit(QString data)
         //处理封包
         if (s.contains(QRegExp("\\bpackage\\s*=\\s*")))
         {
-            if (s.contains("DCS"))
+            if ((s.contains("DCS")) || (s.contains("RISING")))
             {
                 lcdInitPara << MIPI_DCS;
             }
-            else if (s.contains("GP"))
+            else if ((s.contains("GP")) || (s.contains("FALLING")))
             {
                 lcdInitPara << MIPI_GP;
             }
@@ -456,7 +456,7 @@ bool CodeParse::parsePattern(QString data)
             {
                 pattern << (uint)s.at(i).toLatin1();
             }
-            pattern << 0;
+            pattern << 0; //结束符
         }
 
         if (s.contains(QRegExp("^horizontal colorbar\\s*")))
@@ -569,11 +569,23 @@ bool CodeParse::parseLcdType(QString data)
         mSystemConfig.LcdType = MIPI_LCD;
         return true;
     }
-    else if (data == "RGB")
+    else if (data == "RGB_SPI16BIT")
     {
-        mSystemConfig.LcdType = RGB_LCD;
+        mSystemConfig.LcdType = RGB_SPI16BIT;
         return true;
     }
+    else if (data == "RGB_SPI8BIT")
+    {
+        mSystemConfig.LcdType = RGB_SPI8BIT;
+        return true;
+    }
+
+    else if (data == "RGB_SPI9BIT")
+    {
+        mSystemConfig.LcdType = RGB_SPI9BIT;
+        return true;
+    }
+
     return false;
 }
 
@@ -774,21 +786,15 @@ bool CodeParse::compile()
             break;
 
         case 4:
-            if(mSystemConfig.LcdType != MIPI_LCD)
-            {
-                result[4] = true;
-                break;
-            }
-
             emit Info("Info:find mipi setting");
             result[4] = parseMipi(data[i0]);
             break;
 
         case 5:
             emit Info("Info:find lcd intial");
-            if(mSystemConfig.LcdType == MIPI_LCD)
-                result[5] = parseMipiLcdInit(data[i0]);
-            else if(mSystemConfig.LcdType == RGB_LCD)
+            if((mSystemConfig.LcdType == MIPI_LCD) || (mSystemConfig.LcdType == RGB_SPI8BIT) || (mSystemConfig.LcdType == RGB_SPI9BIT))
+                result[5] = parseMipiOr8BitRGBLcdInit(data[i0]);
+            else if(mSystemConfig.LcdType == RGB_SPI16BIT)
                 result[5] = parseRGBLcdInit(data[i0]);
             else
                 result[5] = false;
@@ -814,6 +820,12 @@ bool CodeParse::compile()
 
         i0++;
     }
+
+    if(mSystemConfig.LcdType != MIPI_LCD)
+    {
+        result[4] = true;
+    }
+
 
     for (int i = 0; i < mTitleStr.size(); i++)
     {

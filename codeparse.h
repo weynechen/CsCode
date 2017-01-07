@@ -64,7 +64,9 @@ typedef enum
 typedef enum
 {
     MIPI_LCD,
-    RGB_LCD,
+    RGB_SPI16BIT,
+    RGB_SPI8BIT,
+    RGB_SPI9BIT,
 }LcdTypeDef;
 
 class CodeParse : public QObject
@@ -147,7 +149,7 @@ public:
   bool parsePower(QString data);
   bool parseBacklight(QString data);
   bool parseLcdPara(QString data);
-  bool parseMipiLcdInit(QString data);
+  bool parseMipiOr8BitRGBLcdInit(QString data);
   bool parseMipi(QString data);
   bool parsePattern(QString data);
   bool parseAutoRun(QString data);
