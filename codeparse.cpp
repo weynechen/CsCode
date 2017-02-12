@@ -585,6 +585,11 @@ bool CodeParse::parseLcdType(QString data)
         mSystemConfig.LcdType = RGB_SPI9BIT;
         return true;
     }
+    else if (data == "SPI_2_Data_Lane")
+    {
+        mSystemConfig.LcdType = SPI_2_Data_Lane;
+        return true;
+    }
 
     return false;
 }
@@ -792,7 +797,7 @@ bool CodeParse::compile()
 
         case 5:
             emit Info("Info:find lcd intial");
-            if((mSystemConfig.LcdType == MIPI_LCD) || (mSystemConfig.LcdType == RGB_SPI8BIT) || (mSystemConfig.LcdType == RGB_SPI9BIT))
+            if((mSystemConfig.LcdType == MIPI_LCD) || (mSystemConfig.LcdType == RGB_SPI8BIT) || (mSystemConfig.LcdType == RGB_SPI9BIT)|| (mSystemConfig.LcdType == SPI_2_Data_Lane))
                 result[5] = parseMipiOr8BitRGBLcdInit(data[i0]);
             else if(mSystemConfig.LcdType == RGB_SPI16BIT)
                 result[5] = parseRGBLcdInit(data[i0]);

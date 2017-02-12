@@ -67,6 +67,7 @@ typedef enum
     RGB_SPI16BIT,
     RGB_SPI8BIT,
     RGB_SPI9BIT,
+    SPI_2_Data_Lane,
 }LcdTypeDef;
 
 class CodeParse : public QObject
