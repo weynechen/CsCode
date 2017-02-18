@@ -344,61 +344,58 @@ bool CodeParse::parseMipiOr8BitRGBLcdInit(QString data)
 }
 
 
-bool CodeParse::parseMipi(QString data)
+bool CodeParse::parseMipiSettings(QString data)
 {
-    bool ok;
-    QRegExp rxDec("\\d+");
-    QRegExp rxHex("0x[0-9A-Fa-f]+");
-    QRegExp rxLaneDec("MIPI lane:\\s*[1-4]\\s*");
-    QRegExp rxSpeedDec("MIPI speed:\\s*\\d+\\s*Mbps\\s*");
-    QRegExp rxLaneHex("MIPI lane:\\s*0x[1-4]\\s*");
-    QRegExp rxSpeedHex("MIPI speed:\\s*0x[0-9A-Fa-f]+\\s*Mbps\\s*");
+   QRegExp rxPara("write +0x[0-9a-fA-F]+ 0x[0-9a-fA-F]+");
+   QRegExp rx("^write +(.*) +(.*)");
+   QStringList strList = data.split("\n", QString::SkipEmptyParts);
+   bool ok;
+   QList<quint8> para;
 
-    data.replace(QRegExp("\n\n+"), "\n");
-    QStringList strList = data.split("\n", QString::SkipEmptyParts);
-    uint mipiLane = 0, mipiSpeed = 0;
 
-    foreach(QString str, strList)
-    {
-        if (rxLaneDec.exactMatch(str))
-        {
-            mipiLane = QString(str[str.indexOf(rxDec)]).toInt();
-        }
+   foreach(QString s,strList)
+   {
+       if(s.contains(rxPara))
+       {
+            if(s.indexOf(rx) != -1)
+            {
+                quint8 cmd = rx.cap(1).toInt(&ok,16);
+                quint16 parameter = rx.cap(2).toInt(&ok,16);
 
-        if (rxLaneHex.exactMatch(str))
-        {
-            str.indexOf(rxHex);
-            QString s = rxHex.cap();
-            mipiSpeed = s.remove("0x").toInt(&ok, 16);
-        }
+                if(!ok)
+                    return false;
 
-        if (rxSpeedDec.exactMatch(str))
-        {
-            str.indexOf(rxDec);
-            mipiSpeed = rxDec.cap().toInt();
-        }
+                para<<cmd<<(quint8)(parameter)<<(quint8)(parameter>>8);
 
-        if (rxSpeedHex.exactMatch(str))
-        {
-            str.indexOf(rxHex);
-            QString s = rxHex.cap();
-            mipiSpeed = s.remove("0x").toInt(&ok, 16);
-        }
-    }
+            }
+       }
+       else
+       {
+           emit Info("Error:MIPI settings error");
+           return false;
+       }
+   }
 
-    if ((mipiSpeed == 0) || (mipiLane == 0))
-    {
-        emit Info("Error:Mipi setting error");
-        return false;
-    }
-    else
-    {
-        mSystemConfig.MIPIConfig[0] = 3;
-        mSystemConfig.MIPIConfig[1] = mipiSpeed >> 8;
-        mSystemConfig.MIPIConfig[2] = mipiSpeed & 0xff;
-        mSystemConfig.MIPIConfig[3] = mipiLane & 0xff;
-        return true;
-    }
+   if(para.size()>255)
+       emit Info("Error:Two much MIPI parameters");
+
+   mSystemConfig.MIPIConfig[0] = para.size() >> 8;
+   mSystemConfig.MIPIConfig[1] = para.size();
+
+   for(int i = 0;i<para.size();i++)
+   {
+       mSystemConfig.MIPIConfig[i + 2] = para[i];
+   }
+
+
+   for(int i = 0;i<para.size()+2;i++)
+   {
+       qDebug()<<hex<<mSystemConfig.MIPIConfig[i];
+   }
+
+
+   return true;
+
 }
 
 
@@ -792,7 +789,7 @@ bool CodeParse::compile()
 
         case 4:
             emit Info("Info:find mipi setting");
-            result[4] = parseMipi(data[i0]);
+            result[4] = parseMipiSettings(data[i0]);
             break;
 
         case 5:
@@ -843,7 +840,6 @@ bool CodeParse::compile()
 
     mCompiledPara.clear();
 
-    qDebug()<<hex<<sizeof(ConfigTypeDef);
 
     //data
     quint8 *p = (quint8 *)&mSystemConfig;
@@ -866,7 +862,6 @@ bool CodeParse::compile()
         DataToSerial.append(0xff);
     }
 
-    qDebug()<<DataToSerial.size();
 
     emit Info("OK:compile success\n");
     return true;

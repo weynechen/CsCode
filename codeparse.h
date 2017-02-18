@@ -151,7 +151,7 @@ public:
   bool parseBacklight(QString data);
   bool parseLcdPara(QString data);
   bool parseMipiOr8BitRGBLcdInit(QString data);
-  bool parseMipi(QString data);
+  bool parseMipiSettings(QString data);
   bool parsePattern(QString data);
   bool parseAutoRun(QString data);
   bool parseLcdType(QString data);
