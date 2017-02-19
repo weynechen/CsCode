@@ -4,13 +4,13 @@
 #include "crc.h"
 #include "QTime"
 
-CodeParse::CodeParse(QObject *parent) : QObject(parent), mPower(0), mBacklight(0), mMaxCurrent(150)
+CodeParse::CodeParse(QObject *parent) : QObject(parent), mPower(0), mBacklight(0), mMaxCurrent(150),IsLcdTimingParsed(false)
 {
     mTitleStr << "project name" << "power" << "backlight" << "LCD parameter" << "MIPI setting" << "LCD initial code" << "pattern" << "auto run"<<"lcd type";
     mPowerStr << "1.8V" << "2.8V" << "3.3V" << "VSP" << "VSN"<<"5V"<<"MTP";
     mLcdParaStr << "pix clock" << "horizontal resolution" << "vertical resolution" << "horizontal back porch"
-               << "horizontal front porch" << "horizontal sync pulse width" << "vertical back porch" << "vertical front porch"
-               << "vertical sync pulse width";
+                << "horizontal front porch" << "horizontal sync pulse width" << "vertical back porch" << "vertical front porch"
+                << "vertical sync pulse width";
     mLcdInit << "package" << "write" << "delay" << "read";
 
     //初始化SystemConfig
@@ -51,52 +51,52 @@ bool CodeParse::parsePower(QString data)
     {
         strLine = ts.readLine();
         strLine.remove(QRegExp("\\s+"));    //删除空格
-       // bool match = rx.exactMatch(strLine);
+        // bool match = rx.exactMatch(strLine);
         //if (match)
         //{
-            switch (mPowerStr.indexOf(QRegExp(strLine)))
-            {
-            case 0:
-                mSystemConfig.PowerSettings |= 0x01;
+        switch (mPowerStr.indexOf(QRegExp(strLine)))
+        {
+        case 0:
+            mSystemConfig.PowerSettings |= 0x01;
 
-                break;
+            break;
 
-            case 1:
-                mSystemConfig.PowerSettings |= 0x2;
-                break;
+        case 1:
+            mSystemConfig.PowerSettings |= 0x2;
+            break;
 
-            case 2:
-                mSystemConfig.PowerSettings |= 0x4;
-                break;
+        case 2:
+            mSystemConfig.PowerSettings |= 0x4;
+            break;
 
-            case 3:
-                mSystemConfig.PowerSettings |= 0x8;
-                break;
+        case 3:
+            mSystemConfig.PowerSettings |= 0x8;
+            break;
 
-            case 4:
-                mSystemConfig.PowerSettings |= 0x10;
-                break;
+        case 4:
+            mSystemConfig.PowerSettings |= 0x10;
+            break;
 
-            case 5:
-                mSystemConfig.PowerSettings |= 0x20;
-                break;
+        case 5:
+            mSystemConfig.PowerSettings |= 0x20;
+            break;
 
-            case 6:
-                mSystemConfig.PowerSettings |= 0x40;
-                break;
+        case 6:
+            mSystemConfig.PowerSettings |= 0x40;
+            break;
 
 
-            default:
+        default:
 
-                emit Info("Error:power error");
-                return false;
-            }
+            emit Info("Error:power error");
+            return false;
+        }
         //}
-//        else
-//        {
-//            emit Info("Error:power error");
-//            return false;
-//        }
+        //        else
+        //        {
+        //            emit Info("Error:power error");
+        //            return false;
+        //        }
     }
     return true;
 }
@@ -188,11 +188,16 @@ bool CodeParse::parseLcdPara(QString data)
     }
 
     quint16 count = 0;
+
     foreach(quint16 l, lcdPara)
     {
         mSystemConfig.LCDTimingPara[count++] = (quint8)(l & 0xff);
         mSystemConfig.LCDTimingPara[count++] = (quint8)(l >> 8);
     }
+
+    memcpy((quint16 *)&mLCDTiming, (quint16 *)mSystemConfig.LCDTimingPara, sizeof(mSystemConfig.LCDTimingPara));
+    IsLcdTimingParsed = true;
+
 
     return true;
 }
@@ -346,55 +351,133 @@ bool CodeParse::parseMipiOr8BitRGBLcdInit(QString data)
 
 bool CodeParse::parseMipiSettings(QString data)
 {
-   QRegExp rxPara("write +0x[0-9a-fA-F]+ 0x[0-9a-fA-F]+");
-   QRegExp rx("^write +(.*) +(.*)");
-   QStringList strList = data.split("\n", QString::SkipEmptyParts);
-   bool ok;
-   QList<quint8> para;
+    QRegExp rxPara("write +0x[0-9a-fA-F]+ 0x[0-9a-fA-F]+");
+    QRegExp rx("^write +(.*) +(.*)");
+    data.replace(QRegExp("\n\n+"), "\n");
+    data.remove("\t");
+    data.remove("\r");
+    data.replace(QRegExp("  +")," ");
+    QStringList strList = data.split("\n", QString::SkipEmptyParts);
+    bool ok;
+    QList<quint8> para;
+
+    if(strList.isEmpty())
+    {
+        emit Info("Error:need mipi parameter");
+        return false;
+    }
+    QString sMode = strList[0];
+
+    if(sMode.contains(rxPara))
+    {
+
+        if(IsLcdTimingParsed == false)
+        {
+            emit Info("Error:Please set Lcd timming before MIPI setting");
+            return false;
+        }
+        else
+            IsLcdTimingParsed = false;
 
 
-   foreach(QString s,strList)
-   {
-       if(s.contains(rxPara))
-       {
-            if(s.indexOf(rx) != -1)
+        para<<0xb7<<0x00<<0x50;
+        para<<0xb9<<0x00<<0x00;
+        para<<0xb1<<(quint8)mLCDTiming.VSPW<<(quint8)mLCDTiming.HSPW;
+        para<<0xb2<<(quint8)mLCDTiming.VBPD<<(quint8)(mLCDTiming.HBPD+10);
+        para<<0xb3<<(quint8)mLCDTiming.VFPD<<(quint8)mLCDTiming.HFPD;
+        para<<0xb4<<(quint8)(mLCDTiming.LCDH>>8)<<(quint8)(mLCDTiming.LCDH);
+        para<<0xb5<<(quint8)(mLCDTiming.LCDV>>8)<<(quint8)(mLCDTiming.LCDV);
+
+        foreach(QString s,strList)
+        {
+            if(s.contains(rxPara))
             {
-                quint8 cmd = rx.cap(1).toInt(&ok,16);
-                quint16 parameter = rx.cap(2).toInt(&ok,16);
+                if(s.indexOf(rx) != -1)
+                {
+                    quint8 cmd = rx.cap(1).toInt(&ok,16);
+                    quint16 parameter = rx.cap(2).toInt(&ok,16);
 
-                if(!ok)
-                    return false;
+                    if(!ok)
+                    {
+                        emit Info("Error:MIPI settings error");
+                        return false;
+                    }
+                    para<<cmd<<(quint8)(parameter>>8)<<(quint8)(parameter);
 
-                para<<cmd<<(quint8)(parameter)<<(quint8)(parameter>>8);
-
+                }
             }
-       }
-       else
-       {
-           emit Info("Error:MIPI settings error");
-           return false;
-       }
-   }
+            else
+            {
+                emit Info("Error:MIPI settings error");
+                return false;
+            }
+        }
 
-   if(para.size()>255)
-       emit Info("Error:Two much MIPI parameters");
+        if(para.size()>255)
+            emit Info("Error:Two much MIPI parameters");
 
-   mSystemConfig.MIPIConfig[0] = para.size() >> 8;
-   mSystemConfig.MIPIConfig[1] = para.size();
-
-   for(int i = 0;i<para.size();i++)
-   {
-       mSystemConfig.MIPIConfig[i + 2] = para[i];
-   }
+        mSystemConfig.MIPIConfig[0] = para.size();
 
 
-   for(int i = 0;i<para.size()+2;i++)
-   {
-       qDebug()<<hex<<mSystemConfig.MIPIConfig[i];
-   }
+        for(int i = 0;i<para.size();i++)
+        {
+            mSystemConfig.MIPIConfig[i + 1] = para[i];
+        }
+    }
+    else// if(sMode.contains(rxbuildin))
+    {
+        QRegExp rxDec("\\d+");
+        QRegExp rxHex("0x[0-9A-Fa-f]+");
+        QRegExp rxLaneDec("MIPI lane:\\s*[1-4]\\s*");
+        QRegExp rxSpeedDec("MIPI speed:\\s*\\d+\\s*Mbps\\s*");
+        QRegExp rxLaneHex("MIPI lane:\\s*0x[1-4]\\s*");
+        QRegExp rxSpeedHex("MIPI speed:\\s*0x[0-9A-Fa-f]+\\s*Mbps\\s*");
 
+        QStringList strList = data.split("\n", QString::SkipEmptyParts);
+        uint mipiLane = 0, mipiSpeed = 0;
 
-   return true;
+        foreach(QString str, strList)
+        {
+            if (rxLaneDec.exactMatch(str))
+            {
+                mipiLane = QString(str[str.indexOf(rxDec)]).toInt();
+            }
+
+            if (rxLaneHex.exactMatch(str))
+            {
+                str.indexOf(rxHex);
+                QString s = rxHex.cap();
+                mipiSpeed = s.remove("0x").toInt(&ok, 16);
+            }
+
+            if (rxSpeedDec.exactMatch(str))
+            {
+                str.indexOf(rxDec);
+                mipiSpeed = rxDec.cap().toInt();
+            }
+
+            if (rxSpeedHex.exactMatch(str))
+            {
+                str.indexOf(rxHex);
+                QString s = rxHex.cap();
+                mipiSpeed = s.remove("0x").toInt(&ok, 16);
+            }
+        }
+
+        if ((mipiSpeed == 0) || (mipiLane == 0))
+        {
+            emit Info("Error:Mipi setting error");
+            return false;
+        }
+        else
+        {
+            mSystemConfig.MIPIConfig[0] = 3;
+            mSystemConfig.MIPIConfig[1] = mipiSpeed >> 8;
+            mSystemConfig.MIPIConfig[2] = mipiSpeed & 0xff;
+            mSystemConfig.MIPIConfig[3] = mipiLane & 0xff;
+        }
+    }
+    return true;
 
 }
 

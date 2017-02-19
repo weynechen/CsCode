@@ -140,7 +140,26 @@ private:
     PATTERN_END
   } pattern_type;
 
+  /**
+   * @breif  LCD时序参数定义
+   */
+  typedef struct
+  {
+    quint16 DCLK;
+    quint16 LCDH;
+    quint16 LCDV;
 
+    quint16 HBPD;
+    quint16 HFPD;
+    quint16 HSPW;
+
+    quint16 VBPD;
+    quint16 VFPD;
+    quint16 VSPW;
+  } LCDTimingParaTypeDef;
+
+  LCDTimingParaTypeDef mLCDTiming;
+  bool IsLcdTimingParsed;
 public:
 
 
