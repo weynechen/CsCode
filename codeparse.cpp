@@ -383,7 +383,7 @@ bool CodeParse::parseMipiSettings(QString data)
         para<<0xb7<<0x00<<0x50;
         para<<0xb9<<0x00<<0x00;
         para<<0xb1<<(quint8)mLCDTiming.VSPW<<(quint8)mLCDTiming.HSPW;
-        para<<0xb2<<(quint8)mLCDTiming.VBPD<<(quint8)(mLCDTiming.HBPD+10);
+        para<<0xb2<<(quint8)mLCDTiming.VBPD<<(quint8)(mLCDTiming.HBPD);
         para<<0xb3<<(quint8)mLCDTiming.VFPD<<(quint8)mLCDTiming.HFPD;
         para<<0xb4<<(quint8)(mLCDTiming.LCDH>>8)<<(quint8)(mLCDTiming.LCDH);
         para<<0xb5<<(quint8)(mLCDTiming.LCDV>>8)<<(quint8)(mLCDTiming.LCDV);
