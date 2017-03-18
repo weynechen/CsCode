@@ -587,6 +587,16 @@ bool CodeParse::parsePattern(QString data)
             pattern << RGBLEVEL;
         }
 
+        if (s.contains(QRegExp("^sleep in\\s*")))
+        {
+            pattern << SLEEP_IN;
+        }
+
+        if (s.contains(QRegExp("^sleep out\\s*")))
+        {
+            pattern << SLEEP_OUT;
+        }
+
         if (s.contains(QRegExp("^null pattern\\s*")))
         {
             pattern << NULL_PATTERN;

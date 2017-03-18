@@ -120,25 +120,27 @@ private:
 
   typedef enum
   {
-    PATTERN_START,
-    RGB,
-    FLICKERV,
-    FLICKERH,
-    COLORBARV,
-    COLORBARH,
-    GRAYLEVEL_V,
-    GRAYLEVEL_H,
-    CROSSTALK,
-    PIC,
-    FRAME,
-    CHESSBOARD,
-    RGBBAR,
-    RGBLEVEL,
-    PATTERN_STAY,
-    NULL_PATTERN,
-    SHOW_ID,
-    PATTERN_END
-  } pattern_type;
+      PATTERN_START,
+      RGB,
+      FLICKERV,
+      FLICKERH,
+      COLORBARV,
+      COLORBARH,
+      GRAYLEVEL_V,
+      GRAYLEVEL_H,
+      CROSSTALK,
+      PIC,
+      FRAME,
+      CHESSBOARD,
+      RGBBAR,
+      RGBLEVEL,
+      PATTERN_STAY,
+      NULL_PATTERN,
+      SHOW_ID,
+      SLEEP_IN,
+      SLEEP_OUT,
+      PATTERN_END
+  } PatternTypeDef;
 
   /**
    * @breif  LCD时序参数定义
