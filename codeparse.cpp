@@ -7,7 +7,7 @@
 CodeParse::CodeParse(QObject *parent) : QObject(parent), mPower(0), mBacklight(0), mMaxCurrent(150),IsLcdTimingParsed(false)
 {
     mTitleStr << "project name" << "power" << "backlight" << "LCD parameter" << "MIPI setting" << "LCD initial code" << "pattern" << "auto run"<<"lcd type";
-    mPowerStr << "1.8V" << "2.8V" << "3.3V" << "VSP" << "VSN"<<"5V"<<"MTP";
+    mPowerStr << "1.8V" << "2.8V" << "3.3V" << "VSP" << "VSN"<<"5V"<<"MTP"<<"AVDD";
     mLcdParaStr << "pix clock" << "horizontal resolution" << "vertical resolution" << "horizontal back porch"
                 << "horizontal front porch" << "horizontal sync pulse width" << "vertical back porch" << "vertical front porch"
                 << "vertical sync pulse width";
@@ -85,6 +85,9 @@ bool CodeParse::parsePower(QString data)
             mSystemConfig.PowerSettings |= 0x40;
             break;
 
+        case 7:
+            mSystemConfig.PowerSettings |= 0x80;
+            break;
 
         default:
 
