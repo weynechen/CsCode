@@ -26,7 +26,8 @@ SOURCES += main.cpp\
     updateconfig.cpp \
     crc.cpp \
     protocol/rec.cpp \
-    protocol/transmit.cpp
+    protocol/transmit.cpp \
+    encrypthex.cpp
 
 HEADERS  += mainwindow.h \
     commandedit.h \
@@ -42,7 +43,8 @@ HEADERS  += mainwindow.h \
     crc.h \
     protocol/pro.h \
     protocol/rec.h \
-    protocol/transmit.h
+    protocol/transmit.h \
+    encrypthex.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \

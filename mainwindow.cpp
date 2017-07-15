@@ -14,6 +14,7 @@
 #include "QTime"
 #include <QCoreApplication>
 #include "QSerialPortInfo"
+#include "encrypthex.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mIsDownloadDone(false), mIsFileSaved(true),mLidarRawDataCounter(0),upgradeMsg(FW_NULL)
@@ -321,7 +322,17 @@ void MainWindow::upgradeFirmware(QString str)
 
     if(!filePath.contains(QRegExp("cfw")))
     {
-        mMsg->appendPlainText("Error:wrong firmware or path");
+        QRegExp rx("\\S*\\.hex");
+        if(rx.exactMatch(filePath))
+        {
+            qDebug()<<"hex file";
+            EncryptHex hex;
+            hex.Encrypt(filePath);
+        }
+        else
+        {
+            mMsg->appendPlainText("Error:wrong firmware or path");
+        }
         return;
     }
 
