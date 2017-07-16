@@ -7,6 +7,8 @@
 
 typedef unsigned int uint32_t;
 
+#define ENCRYPT_NAME "tmp.cfw"
+
 struct HexSection
 {
     uint32_t Len;
@@ -28,16 +30,26 @@ typedef enum
 }HexDataType;
 
 
-class EncryptHex
+class EncryptHex : public QObject
 {
+      Q_OBJECT
 
 private:
     bool asciiToByte(const QByteArray &data);
     bool isHexRight();
-    QList<quint8>mByte;
 
+    void calSectionInfo();
+    void newSection();
+    bool getSectionData();
+    bool encryptAllFile();
+    bool encryptSection(QString filepath);
+
+    QList<quint8>mByte;
+    uint32_t RandomNum[4];
+    QList<quint32>mEncrytData;
+    QList<HexSection*>mSectionData;
 public:
-    EncryptHex();
+    EncryptHex(QObject *parent);
     bool Encrypt(QString filepath);
 };
 

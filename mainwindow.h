@@ -16,6 +16,7 @@
 #include "protocol/pro.h"
 #include "QProgressBar"
 #include "QTimer"
+#include "encrypthex.h"
 
 #define MAX_DATA_AMOUTN_PER_FRAME 8192
 #define PID1 0x5738
@@ -75,6 +76,7 @@ private:
     QTimer *mPollUSBStatusTimer;
     qint8 mHeartbeats;
     QString mFirmwarePath;
+    EncryptHex *mHexFile;
 
     bool saveToFile(const QString& fileName);
     void loadFile();

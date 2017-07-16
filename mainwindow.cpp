@@ -14,10 +14,11 @@
 #include "QTime"
 #include <QCoreApplication>
 #include "QSerialPortInfo"
-#include "encrypthex.h"
+
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), mIsDownloadDone(false), mIsFileSaved(true),mLidarRawDataCounter(0),upgradeMsg(FW_NULL)
+    : QMainWindow(parent), ui(new Ui::MainWindow), mIsDownloadDone(false), mIsFileSaved(true),mLidarRawDataCounter(0),upgradeMsg(FW_NULL),
+      mHexFile(new EncryptHex(this))
 {
     ui->setupUi(this);
 
@@ -36,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     initAction();
     recoverCustom();
-    mMsg->appendPlainText("Current Version:V2.2.7\nUpdate date:2017.05.21\n");
+    mMsg->appendPlainText("Current Version:V2.3.0\nUpdate date:2017.07.16\n");
 
 }
 
@@ -289,7 +290,7 @@ void MainWindow::pollUSBStatus()
 void MainWindow::openUpgradeDialog()
 {
     QString fileName = QFileDialog::getOpenFileName(
-                this, "Open file", mFirmwarePath, "firmware(*.cfw)");
+                this, "Open file", mFirmwarePath, "firmware(*.cfw *.hex)");
 
     if (fileName.isEmpty())
     {
@@ -326,14 +327,19 @@ void MainWindow::upgradeFirmware(QString str)
         if(rx.exactMatch(filePath))
         {
             qDebug()<<"hex file";
-            EncryptHex hex;
-            hex.Encrypt(filePath);
+            if(mHexFile->Encrypt(filePath) == false)
+            {
+                mMsg->appendPlainText("Error:error occurred when parse hex file,please retry");
+                return;
+            }
+
+            filePath = ENCRYPT_NAME;
         }
         else
         {
             mMsg->appendPlainText("Error:wrong firmware or path");
+            return;
         }
-        return;
     }
 
     QFile upgradeFile(filePath);

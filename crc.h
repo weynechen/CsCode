@@ -6,7 +6,8 @@ class crc
 {
 public:
   crc();
-  quint32 crcCaculate(const QByteArray& ptr, quint32 poly = 0x04c11db7);
+  quint32 calculateCRC32(const QByteArray& ptr, quint32 poly = 0x04c11db7);
+  quint32 calculateCRC32(const QList<quint32>& pt, quint32 poly = 0x04c11db7);
   bool appendCrc(QByteArray &data);
 };
 
