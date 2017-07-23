@@ -321,10 +321,9 @@ void MainWindow::upgradeFirmware(QString str)
 
     mFirmwarePath = filePath;
 
-    if(!filePath.contains(QRegExp("cfw")))
+    if(!filePath.contains(QRegExp("\\.cfw")))
     {
-        QRegExp rx("\\S*\\.hex");
-        if(rx.exactMatch(filePath))
+        if(filePath.contains(QRegExp("\\.hex")))
         {
             qDebug()<<"hex file";
             if(mHexFile->Encrypt(filePath) == false)
