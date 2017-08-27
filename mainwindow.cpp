@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     initAction();
     recoverCustom();
-    mMsg->appendPlainText("Current Version:V2.3.0\nUpdate date:2017.07.16\n");
+    mMsg->appendPlainText("Current Version:V2.4.0\nUpdate date:2017.08.28\n");
 
 }
 
@@ -1109,7 +1109,14 @@ void MainWindow::parseCode()
         }
         else
         {
-            file.write(mParse->DataToSerial);
+            if(mParse->DataToSerial.isEmpty())
+            {
+                qDebug()<<"error parse";
+            }
+            else
+            {
+                file.write(mParse->DataToSerial);
+            }
         }
     }
 }

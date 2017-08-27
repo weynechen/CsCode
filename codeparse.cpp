@@ -4,21 +4,31 @@
 #include "crc.h"
 #include "QTime"
 
-CodeParse::CodeParse(QObject *parent) : QObject(parent), mPower(0), mBacklight(0), mMaxCurrent(150),IsLcdTimingParsed(false)
+CodeParse::CodeParse(QObject *parent) : QObject(parent), mPower(0), mBacklight(0), mMaxCurrent(150),IsLcdTimingParsed(false),
+    isDefaultPowerSet(false),
+    isUserSystemConfig(false),
+    isUserPowerSet(false)
 {
-    mTitleStr << "project name" << "power" << "backlight" << "LCD parameter" << "MIPI setting" << "LCD initial code" << "pattern" << "auto run"<<"lcd type";
+    mTitleStr << "project name" << "power" << "backlight" << "LCD parameter" << "MIPI setting" << "LCD initial code" << "pattern" << "auto run"<<"lcd type"
+              <<"power on sequence"<<"power off sequence";
     mPowerStr << "1.8V" << "2.8V" << "3.3V" << "VSP" << "VSN"<<"5V"<<"MTP"<<"AVDD";
     mLcdParaStr << "pix clock" << "horizontal resolution" << "vertical resolution" << "horizontal back porch"
                 << "horizontal front porch" << "horizontal sync pulse width" << "vertical back porch" << "vertical front porch"
                 << "vertical sync pulse width";
     mLcdInit << "package" << "write" << "delay" << "read";
 
+    powerList<< "1.8V" << "2.8V" << "3.3V" << "VSP" << "VSN"<<"5V"<<"MTP"<<"AVDD"<<"VCOM"<<"VGH"<<"VGL"<<"reset=high"<<"reset=low";
     //初始化SystemConfig
     QTime t;
     t = QTime::currentTime();
     qsrand(t.msec() + t.second() * 1000);
     quint8 *p = (quint8 *)&mSystemConfig;
     for (int i = 0; i < sizeof(mSystemConfig); i++)
+    {
+        *(p + i) = qrand() % 0xff;
+    }
+    p = (uint8_t *)&userSystemConfig;
+    for (int i = 0; i < sizeof(userSystemConfig); i++)
     {
         *(p + i) = qrand() % 0xff;
     }
@@ -812,6 +822,118 @@ bool CodeParse::parseRGBLcdInit(QString data)
     return true;
 }
 
+bool CodeParse::parseUserPower(QString &data,QList<uint8_t>&power)
+{
+    if (data.isEmpty())
+    {
+        return false;
+    }
+    data.replace(QRegExp("\\n+"), "\n");
+    QTextStream ts(&data);
+    QString strLine;
+    mSystemConfig.PowerSettings = 0;
+
+
+
+    bool isPower = false;
+    uint8_t powerAmount = 0;
+
+    while (!ts.atEnd())
+    {
+        strLine = ts.readLine();
+
+        //处理延时
+        if (strLine.contains(QRegExp("^delay\\s+")))
+        {
+            //必须有电源在前面
+            if(!isPower)
+            {
+                emit Info("Error:No power settings before delay");
+                return false;
+            }
+            isPower = false;
+
+            bool ok = false;
+            strLine.remove(QRegExp("^delay\\s+"));
+
+            uint16_t delay = strLine.toInt(&ok);
+
+            if(!ok)
+            {
+                emit Info("Error:power delay error");
+                return false;
+            }
+
+            power<<(uint8_t)(delay>>8)<<(uint8_t)delay;
+
+        }
+        else
+        {
+            if(isPower)
+            {
+                power<<0<<0;
+            }
+            isPower = true;
+            strLine.remove(QRegExp("\\s+"));    //删除空格
+
+            int index = powerList.indexOf(QRegExp(strLine));
+            if(index == -1)
+            {
+                emit Info("Error: power parameters error");
+                return false;
+            }
+            else
+            {
+                power<<index;
+            }
+            powerAmount++;
+        }
+    }
+
+    power.prepend(powerAmount);
+
+    qDebug()<<power;
+    return true;
+}
+
+bool CodeParse::parsePowerOnSequence(QString data)
+{
+    QList<uint8_t>power;
+    if(parseUserPower(data,power))
+    {
+        if(power.size()>POWER_LEN)
+        {
+            emit Info("Error: power parameter error");
+            return false;
+        }
+        for(int i=0;i<power.size();i++)
+        {
+            userSystemConfig.PowerOnSequence[i] = power[i];
+        }
+        return true;
+    }
+    return false;
+}
+
+bool CodeParse::parsePowerOffSequence(QString data)
+{
+    QList<uint8_t>power;
+    if(parseUserPower(data,power))
+    {
+        if(power.size()>POWER_LEN)
+        {
+            emit Info("Error: power parameter error");
+            return false;
+        }
+        for(int i=0;i<power.size();i++)
+        {
+            userSystemConfig.PowerOffSequence[i] = power[i];
+        }
+        return true;
+    }
+    return false;
+}
+
 
 void CodeParse::updateStr(QString& str)
 {
@@ -852,11 +974,7 @@ bool CodeParse::compile()
     }
 
     int i0 = 0;
-    bool result[10];
-    for (int i = 0; i < 10; i++)
-    {
-        result[i] = false;
-    }
+    QList<bool>result;
 
     //根据title选择不同的解析函数
     foreach(QString s, title)
@@ -864,53 +982,95 @@ bool CodeParse::compile()
         switch (mTitleStr.indexOf(QRegExp(s)))
         {
         case 0:
-            emit Info("Info:find project Name");
-            result[0] = parseProjectName(data[i0]);
+            emit Info("Info:find project name");
+            result<< parseProjectName(data[i0]);
             break;
 
         case 1:
+            if(isUserPowerSet)
+            {
+                emit Info("Error:power settings and User-Defined power settings are NOT allowed at the same time");
+                result<<false;
+                break;
+            }
             emit Info("Info:find power");
-            result[1] = parsePower(data[i0]);
+            result<<parsePower(data[i0]);
+            isUserSystemConfig = false;
+            isDefaultPowerSet = true;
             break;
 
         case 2:
             emit Info("Info:find backlight");
-            result[2] = parseBacklight(data[i0]);
+            result<<parseBacklight(data[i0]);
             break;
 
         case 3:
             emit Info("Info:find lcd parameter");
-            result[3] = parseLcdPara(data[i0]);
+            result<<parseLcdPara(data[i0]);
             break;
 
         case 4:
+            if(mSystemConfig.LcdType != MIPI_LCD)
+            {
+                emit Info("Warning:NOT MIPI LCD");
+                result<<true;
+                break;
+            }
+
             emit Info("Info:find mipi setting");
-            result[4] = parseMipiSettings(data[i0]);
+            result<<parseMipiSettings(data[i0]);
             break;
 
         case 5:
             emit Info("Info:find lcd intial");
             if((mSystemConfig.LcdType == MIPI_LCD) || (mSystemConfig.LcdType == RGB_SPI8BIT) || (mSystemConfig.LcdType == RGB_SPI9BIT)|| (mSystemConfig.LcdType == SPI_2_Data_Lane))
-                result[5] = parseMipiOr8BitRGBLcdInit(data[i0]);
+                result<<parseMipiOr8BitRGBLcdInit(data[i0]);
             else if(mSystemConfig.LcdType == RGB_SPI16BIT)
-                result[5] = parseRGBLcdInit(data[i0]);
+                result<<parseRGBLcdInit(data[i0]);
             else
-                result[5] = false;
+                result<<false;
             break;
 
         case 6:
             emit Info("Info:find pattern setting");
-            result[6] = parsePattern(data[i0]);
+            result<<parsePattern(data[i0]);
             break;
 
         case 7:
-            result[7] = parseAutoRun(data[i0]);
+            result<<parseAutoRun(data[i0]);
             emit Info("Info:find auto run setting");
             break;
 
         case 8:
-            result[8] = parseLcdType(data[i0]);
+            result<<parseLcdType(data[i0]);
             emit Info("Info:find lcd type");
+            break;
+
+        case 9:
+            if(isDefaultPowerSet)
+            {
+                emit Info("Error:power settings and power on settings are NOT allowed at the same time");
+                result<<false;
+                break;
+            }
+            result<<parsePowerOnSequence(data[i0]);
+            isUserSystemConfig = true;
+            isUserPowerSet = true;
+            emit Info("Info:find power on sequence");
+            break;
+
+        case 10:
+            if(isDefaultPowerSet)
+            {
+                emit Info("Error:power settings and power off settings are NOT allowed at the same time");
+                result<<false;
+                break;
+            }
+            result<<parsePowerOffSequence(data[i0]);
+            isUserSystemConfig = true;
+            isUserPowerSet = true;
+            emit Info("Info:find power off sequence");
+            break;
 
         default:
             break;
@@ -919,15 +1079,18 @@ bool CodeParse::compile()
         i0++;
     }
 
-    if(mSystemConfig.LcdType != MIPI_LCD)
+
+    uint16_t parameters = isUserSystemConfig?(mTitleStr.size()-1):(mTitleStr.size()-2);
+
+    if(result.size()<parameters)
     {
-        result[4] = true;
+        emit Info("Error:compile failed,missing parameters");
+        return false;
     }
 
-
-    for (int i = 0; i < mTitleStr.size(); i++)
+    foreach(bool r,result)
     {
-        if (result[i] == false)
+        if (r == false)
         {
             emit Info("Error:compile failed");
             return false;
@@ -942,6 +1105,15 @@ bool CodeParse::compile()
     for (int i = 0; i < sizeof(ConfigTypeDef); i++)
     {
         mCompiledPara << *p++;
+    }
+
+    if(isUserSystemConfig)
+    {
+        p = (quint8 *)userSystemConfig.PowerOnSequence;
+        for(int i=0;i<sizeof(UserConfigTypeDef) - sizeof(ConfigTypeDef);i++)
+        {
+            mCompiledPara<<*p++;
+        }
     }
 
     DataToSerial.clear();
