@@ -889,6 +889,7 @@ bool CodeParse::parseUserPower(QString &data,QList<uint8_t>&power)
             powerAmount++;
         }
     }
+    power<<0<<0;
 
     power.prepend(powerAmount);
 
@@ -975,6 +976,10 @@ bool CodeParse::compile()
 
     int i0 = 0;
     QList<bool>result;
+
+    isDefaultPowerSet = false;
+    isUserSystemConfig = false;
+    isUserPowerSet = false;
 
     //根据title选择不同的解析函数
     foreach(QString s, title)
