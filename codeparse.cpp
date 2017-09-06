@@ -682,7 +682,6 @@ bool CodeParse::parseLcdType(QString data)
         mSystemConfig.LcdType = RGB_SPI8BIT;
         return true;
     }
-
     else if (data == "RGB_SPI9BIT")
     {
         mSystemConfig.LcdType = RGB_SPI9BIT;
@@ -693,7 +692,26 @@ bool CodeParse::parseLcdType(QString data)
         mSystemConfig.LcdType = SPI_2_Data_Lane;
         return true;
     }
-
+    else if (data == "LVDS_666_VESA")
+    {
+        mSystemConfig.LcdType = LVDS_666_VESA;
+        return true;
+    }
+    else if (data == "LVDS_666_JEIDA")
+    {
+        mSystemConfig.LcdType = LVDS_666_JEIDA;
+        return true;
+    }
+    else if (data == "LVDS_888_VESA")
+    {
+        mSystemConfig.LcdType = LVDS_888_VESA;
+        return true;
+    }
+    else if (data == "LVDS_888_JEIDA")
+    {
+        mSystemConfig.LcdType = LVDS_888_JEIDA;
+        return true;
+    }
     return false;
 }
 
@@ -1033,7 +1051,7 @@ bool CodeParse::compile()
             else if(mSystemConfig.LcdType == RGB_SPI16BIT)
                 result<<parseRGBLcdInit(data[i0]);
             else
-                result<<false;
+                result<<true;
             break;
 
         case 6:

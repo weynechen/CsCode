@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     initAction();
     recoverCustom();
-    mMsg->appendPlainText("Current Version:V2.4.0\nUpdate date:2017.08.28\n");
+    mMsg->appendPlainText("Current Version:V2.4.3\nUpdate date:2017.09.06\n");
 
 }
 
@@ -474,6 +474,7 @@ void MainWindow::upgradeFirmware(QString str)
                 upgradeMsg = FW_NULL;
                 isEnd = true;
                 result = false;
+                qDebug()<<"flash error";
             }
 
         }
@@ -536,6 +537,7 @@ void MainWindow::toggleLcdPower(QString str)
         KEY_DOWN,
         KEY_POWER,
         KEY_MTP,
+        KEY_TP,
         KEY_NULL = 0xff,
     } key = KEY_NULL;
 
@@ -554,6 +556,10 @@ void MainWindow::toggleLcdPower(QString str)
     else if((str == "MTP") || (str =="mtp"))
     {
         key = KEY_MTP;
+    }
+    else if((str == "TP") || (str =="tp"))
+    {
+        key = KEY_TP;
     }
     else
     {
