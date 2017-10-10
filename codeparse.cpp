@@ -572,6 +572,11 @@ bool CodeParse::parsePattern(QString data)
             pattern << FLICKERH;
         }
 
+        if (s.contains(QRegExp("^2-dot flicker\\s*")))
+        {
+            pattern << FLICKER_2DOT;
+        }
+
         if (s.contains(QRegExp("^vertical gray level\\s*")))
         {
             pattern << GRAYLEVEL_V;
