@@ -174,7 +174,7 @@ private:
         SHOW_ID,
         SLEEP_IN,
         SLEEP_OUT,
-        FLICKER_2DOT,
+        FLICKER_DOT,
         PATTERN_END
     } PatternTypeDef;
 
