@@ -175,6 +175,8 @@ private:
         SLEEP_IN,
         SLEEP_OUT,
         FLICKER_DOT,
+        GRAYLEVEL_V_USER,
+        GRAYLEVEL_H_USER,
         PATTERN_END
     } PatternTypeDef;
 

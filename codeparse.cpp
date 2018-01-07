@@ -587,14 +587,59 @@ bool CodeParse::parsePattern(QString data)
             pattern << FLICKER_DOT;
         }
 
-        if (s.contains(QRegExp("^vertical gray level\\s*")))
+        if (s.contains(QRegExp("^vertical gray level +\\d+")))
         {
+            pattern << GRAYLEVEL_V_USER;
+            QRegExp rx("^vertical gray level +(.*)");
+            if (s.indexOf(rx) != -1)
+            {
+                uint16_t level = rx.cap(1).toInt(&ok,0);
+                qDebug()<<level;
+                if(level > 256)
+                {
+                    emit Info("Error:gray level shold not big than 256");
+                    return false;
+                }
+                pattern << (quint8)level << (quint8)(level>>8);
+            }
+            else
+            {
+                emit Info("Error:pattern setting error");
+                return false;
+            }
+        }
+        else if (s.contains(QRegExp("^vertical gray level\\s*")))
+        {
+             qDebug()<<"fix level";
             pattern << GRAYLEVEL_V;
         }
-        if (s.contains(QRegExp("^horizontal gray level\\s*")))
+
+        if (s.contains(QRegExp("^horizontal gray level +\\d+")))
+        {
+            pattern << GRAYLEVEL_H_USER;
+            QRegExp rx("^horizontal gray level +(.*)");
+            if (s.indexOf(rx) != -1)
+            {
+                uint16_t level = rx.cap(1).toInt(&ok,0);
+                qDebug()<<level;
+                if(level > 256)
+                {
+                    emit Info("Error:gray level shold not big than 256");
+                    return false;
+                }
+                pattern << (quint8)level << (quint8)(level>>8);
+            }
+            else
+            {
+                emit Info("Error:pattern setting error");
+                return false;
+            }
+        }
+        else if (s.contains(QRegExp("^horizontal gray level\\s*")))
         {
             pattern << GRAYLEVEL_H;
         }
+
         if (s.contains(QRegExp("^crosstalk\\s*")))
         {
             pattern << CROSSTALK;
