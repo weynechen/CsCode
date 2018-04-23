@@ -6,11 +6,11 @@
 
 CodeParse::CodeParse(QObject *parent) : QObject(parent), mPower(0), mBacklight(0), mMaxCurrent(150),IsLcdTimingParsed(false),
     isDefaultPowerSet(false),
-    isUserSystemConfig(false),
+    isExSystemConfig(false),
     isUserPowerSet(false)
 {
     mTitleStr << "project name" << "power" << "backlight" << "LCD parameter" << "MIPI setting" << "LCD initial code" << "pattern" << "auto run"<<"lcd type"
-              <<"power on sequence"<<"power off sequence";
+              <<"power on sequence"<<"power off sequence"<<"font scale";
     mPowerStr << "1.8V" << "2.8V" << "3.3V" << "VSP" << "VSN"<<"5V"<<"MTP"<<"AVDD";
     mLcdParaStr << "pix clock" << "horizontal resolution" << "vertical resolution" << "horizontal back porch"
                 << "horizontal front porch" << "horizontal sync pulse width" << "vertical back porch" << "vertical front porch"
@@ -27,8 +27,8 @@ CodeParse::CodeParse(QObject *parent) : QObject(parent), mPower(0), mBacklight(0
     {
         *(p + i) = qrand() % 0xff;
     }
-    p = (uint8_t *)&userSystemConfig;
-    for (int i = 0; i < sizeof(userSystemConfig); i++)
+    p = (uint8_t *)&exSystemConfig;
+    for (int i = 0; i < sizeof(exSystemConfig); i++)
     {
         *(p + i) = qrand() % 0xff;
     }
@@ -719,6 +719,28 @@ bool CodeParse::parseAutoRun(QString data)
     return false;
 }
 
+
+bool CodeParse::parseFontScale(QString data)
+{
+    if (data.isEmpty())
+    {
+        return false;
+    }
+    data.remove("\n");
+    data.remove(QRegExp("\\s+"));
+
+    bool ok = true;
+    int scale = data.toInt(&ok,10);
+
+    qDebug()<< "scale:"<<scale;
+    if(ok)
+    {
+        exSystemConfig.FontScale = scale;
+        return true;
+    }
+    return false;
+}
+
 bool CodeParse::parseLcdType(QString data)
 {
     if (data.isEmpty())
@@ -987,7 +1009,7 @@ bool CodeParse::parsePowerOnSequence(QString data)
         }
         for(int i=0;i<power.size();i++)
         {
-            userSystemConfig.PowerOnSequence[i] = power[i];
+            exSystemConfig.PowerOnSequence[i] = power[i];
         }
         return true;
     }
@@ -1006,7 +1028,7 @@ bool CodeParse::parsePowerOffSequence(QString data)
         }
         for(int i=0;i<power.size();i++)
         {
-            userSystemConfig.PowerOffSequence[i] = power[i];
+            exSystemConfig.PowerOffSequence[i] = power[i];
         }
         return true;
     }
@@ -1056,9 +1078,10 @@ bool CodeParse::compile()
     QList<bool>result;
 
     isDefaultPowerSet = false;
-    isUserSystemConfig = false;
+    isExSystemConfig = false;
     isUserPowerSet = false;
 
+    exSystemConfig.FontScale = 0;
     //根据title选择不同的解析函数
     foreach(QString s, title)
     {
@@ -1067,6 +1090,16 @@ bool CodeParse::compile()
         case 0:
             emit Info("Info:find project name");
             result<< parseProjectName(data[i0]);
+            memset(mSystemConfig.ProjectName,0,MAX_NAME_LEN);
+            if(mProjectName.size()<MAX_NAME_LEN)
+            {
+                quint32 counter = 0;
+                foreach(QChar c,mProjectName)
+                {
+                    mSystemConfig.ProjectName[counter++] = c.toLatin1();
+                }
+                qDebug()<<(char*)mSystemConfig.ProjectName;
+            }
             break;
 
         case 1:
@@ -1078,7 +1111,7 @@ bool CodeParse::compile()
             }
             emit Info("Info:find power");
             result<<parsePower(data[i0]);
-            isUserSystemConfig = false;
+            isExSystemConfig = false;
             isDefaultPowerSet = true;
             break;
 
@@ -1137,7 +1170,7 @@ bool CodeParse::compile()
                 break;
             }
             result<<parsePowerOnSequence(data[i0]);
-            isUserSystemConfig = true;
+            isExSystemConfig = true;
             isUserPowerSet = true;
             emit Info("Info:find power on sequence");
             break;
@@ -1150,9 +1183,15 @@ bool CodeParse::compile()
                 break;
             }
             result<<parsePowerOffSequence(data[i0]);
-            isUserSystemConfig = true;
+            isExSystemConfig = true;
             isUserPowerSet = true;
             emit Info("Info:find power off sequence");
+            break;
+
+        case 11:
+            isExSystemConfig = true;
+            result<<parseFontScale(data[i0]);
+            emit Info("Info:find font scale");
             break;
 
         default:
@@ -1163,7 +1202,16 @@ bool CodeParse::compile()
     }
 
 
-    uint16_t parameters = isUserSystemConfig?(mTitleStr.size()-1):(mTitleStr.size()-2);
+    uint16_t parameters = isExSystemConfig?(mTitleStr.size()-1):(mTitleStr.size()-2);
+    int reserveBytes = 0;//兼容以前的配置。模板中没有配置的，从exsystemconfig移除这些字节。
+    if(isExSystemConfig)
+    {
+        if(exSystemConfig.FontScale==0)
+        {
+            reserveBytes = 1;
+        }
+        result<<true;
+    }
 
     if(result.size()<parameters)
     {
@@ -1190,14 +1238,15 @@ bool CodeParse::compile()
         mCompiledPara << *p++;
     }
 
-    if(isUserSystemConfig)
+    if(isExSystemConfig)
     {
-        p = (quint8 *)userSystemConfig.PowerOnSequence;
-        for(int i=0;i<sizeof(UserConfigTypeDef) - sizeof(ConfigTypeDef);i++)
+        p = (quint8 *)exSystemConfig.PowerOnSequence;
+        for(int i=0;i<sizeof(UserConfigTypeDef) - sizeof(ConfigTypeDef)-reserveBytes;i++)
         {
             mCompiledPara<<*p++;
         }
     }
+    qDebug()<<mCompiledPara.size();
 
     DataToSerial.clear();
 

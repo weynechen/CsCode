@@ -53,6 +53,7 @@ typedef struct
     uint8_t PowerOffSequence[POWER_LEN]; /*< 自定义下电时序*/
     uint8_t ConfigVersion;
     uint8_t Checksum;
+    uint8_t FontScale;
 } UserConfigTypeDef;
 
 
@@ -118,8 +119,8 @@ private:
     quint8 mAutoRun;
     QList<quint8> mCompiledPara;
     ConfigTypeDef mSystemConfig;
-    UserConfigTypeDef userSystemConfig;
-    bool isUserSystemConfig;
+    UserConfigTypeDef exSystemConfig;
+    bool isExSystemConfig;
     bool isDefaultPowerSet;
     bool isUserPowerSet;
     QStringList powerList;
@@ -218,6 +219,7 @@ public:
     bool parseUserPower(QString &data, QList<uint8_t>&power);
     bool parsePowerOnSequence(QString data);
     bool parsePowerOffSequence(QString data);
+    bool parseFontScale(QString data);
     bool compile(void);
     void updateStr(QString& str);
 
