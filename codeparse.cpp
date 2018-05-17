@@ -10,7 +10,7 @@ CodeParse::CodeParse(QObject *parent) : QObject(parent), mPower(0), mBacklight(0
     isUserPowerSet(false)
 {
     mTitleStr << "project name" << "power" << "backlight" << "LCD parameter" << "MIPI setting" << "LCD initial code" << "pattern" << "auto run"<<"lcd type"
-              <<"power on sequence"<<"power off sequence"<<"font scale";
+              <<"power on sequence"<<"power off sequence"<<"font scale"<<"hardware id voltage"<<"TE frequence"<<"PWM frequence";
     mPowerStr << "1.8V" << "2.8V" << "3.3V" << "VSP" << "VSN"<<"5V"<<"MTP"<<"AVDD";
     mLcdParaStr << "pix clock" << "horizontal resolution" << "vertical resolution" << "horizontal back porch"
                 << "horizontal front porch" << "horizontal sync pulse width" << "vertical back porch" << "vertical front porch"
@@ -32,6 +32,9 @@ CodeParse::CodeParse(QObject *parent) : QObject(parent), mPower(0), mBacklight(0
     {
         *(p + i) = qrand() % 0xff;
     }
+
+    memset(&mSystemConfig.ProjectName,0,MAX_NAME_LEN);
+    memset(&exSystemConfig.ProjectName,0,MAX_NAME_LEN);
 }
 
 
@@ -594,7 +597,6 @@ bool CodeParse::parsePattern(QString data)
             if (s.indexOf(rx) != -1)
             {
                 uint16_t level = rx.cap(1).toInt(&ok,0);
-                qDebug()<<level;
                 if(level > 256)
                 {
                     emit Info("Error:gray level shold not big than 256");
@@ -610,7 +612,6 @@ bool CodeParse::parsePattern(QString data)
         }
         else if (s.contains(QRegExp("^vertical gray level\\s*")))
         {
-             qDebug()<<"fix level";
             pattern << GRAYLEVEL_V;
         }
 
@@ -621,7 +622,6 @@ bool CodeParse::parsePattern(QString data)
             if (s.indexOf(rx) != -1)
             {
                 uint16_t level = rx.cap(1).toInt(&ok,0);
-                qDebug()<<level;
                 if(level > 256)
                 {
                     emit Info("Error:gray level shold not big than 256");
@@ -692,8 +692,6 @@ bool CodeParse::parsePattern(QString data)
     {
         mSystemConfig.Pattern[i + 2] = pattern[i];
     }
-    //qDebug() << pattern.size();
-    //qDebug() << hex << pattern;
     return true;
 }
 
@@ -732,13 +730,196 @@ bool CodeParse::parseFontScale(QString data)
     bool ok = true;
     int scale = data.toInt(&ok,10);
 
-    qDebug()<< "scale:"<<scale;
     if(ok)
     {
         exSystemConfig.FontScale = scale;
         return true;
     }
     return false;
+}
+
+bool CodeParse::parseHWID(QString data)
+{
+    if (data.isEmpty())
+    {
+        emit Info("Error:hardware id parameters error");
+        return false;
+    }
+
+    data.replace(QRegExp("\\n\\n+"), "\n");
+
+    QTextStream ts(&data);
+    QString strLine;
+    QList<quint16> hw;
+
+    QStringList threshold;
+    threshold<<"min"<<"max";
+
+    foreach(QString s, threshold)
+    {
+        if (data.indexOf(s) == -1)
+        {
+            emit Info("Error:hardware settings error");
+            return false;
+        }
+        else
+        {
+            strLine = ts.readLine();
+            strLine.remove(s);
+            strLine.remove(":");
+            strLine.remove(QRegExp("\\s"));
+
+            QRegExp rxDec("\\b\\d+\\b");
+            QRegExp rxHex("\\b0x[0-9A-Fa-f]+\\b");
+            bool result = rxDec.exactMatch(strLine);
+            if (result)
+            {
+                hw << strLine.toInt();
+            }
+            else
+            {
+                result = rxHex.exactMatch(strLine);
+                if (result)
+                {
+                    bool ok;
+                    strLine.remove("0x");
+                    hw << strLine.toInt(&ok, 16);
+                }
+                else
+                {
+                    emit Info("Error:hardware id parameter setting error");
+                    return false;
+                }
+            }
+        }
+    }
+
+    exSystemConfig.HardwareID[0] = hw[0];
+    exSystemConfig.HardwareID[1] = hw[1];
+
+    return true;
+}
+
+bool CodeParse::parseTE(QString data)
+{
+    if (data.isEmpty())
+    {
+        emit Info("Error:TE parameters error");
+        return false;
+    }
+
+    data.replace(QRegExp("\\n\\n+"), "\n");
+
+    QTextStream ts(&data);
+    QString strLine;
+    QList<quint16> te;
+
+    QStringList threshold;
+    threshold<<"min"<<"max";
+
+    foreach(QString s, threshold)
+    {
+        if (data.indexOf(s) == -1)
+        {
+            emit Info("Error:TE settings error");
+            return false;
+        }
+        else
+        {
+            strLine = ts.readLine();
+            strLine.remove(s);
+            strLine.remove(":");
+            strLine.remove(QRegExp("\\s"));
+
+            QRegExp rxDec("\\b\\d+\\b");
+            QRegExp rxHex("\\b0x[0-9A-Fa-f]+\\b");
+            bool result = rxDec.exactMatch(strLine);
+            if (result)
+            {
+                te << strLine.toInt();
+            }
+            else
+            {
+                result = rxHex.exactMatch(strLine);
+                if (result)
+                {
+                    bool ok;
+                    strLine.remove("0x");
+                    te << strLine.toInt(&ok, 16);
+                }
+                else
+                {
+                    emit Info("Error:TE parameter setting error");
+                    return false;
+                }
+            }
+        }
+    }
+
+    exSystemConfig.TE[0] = te[0];
+    exSystemConfig.TE[1] = te[1];
+    return true;
+}
+
+bool CodeParse::parsePWM(QString data)
+{
+    if (data.isEmpty())
+    {
+        emit Info("Error:PWM parameters error");
+        return false;
+    }
+
+    data.replace(QRegExp("\\n\\n+"), "\n");
+
+    QTextStream ts(&data);
+    QString strLine;
+    QList<quint32> pwm;
+
+    QStringList threshold;
+    threshold<<"min"<<"max";
+
+    foreach(QString s, threshold)
+    {
+        if (data.indexOf(s) == -1)
+        {
+            emit Info("Error:PWM settings error");
+            return false;
+        }
+        else
+        {
+            strLine = ts.readLine();
+            strLine.remove(s);
+            strLine.remove(":");
+            strLine.remove(QRegExp("\\s"));
+
+            QRegExp rxDec("\\b\\d+\\b");
+            QRegExp rxHex("\\b0x[0-9A-Fa-f]+\\b");
+            bool result = rxDec.exactMatch(strLine);
+            if (result)
+            {
+                pwm << strLine.toInt();
+            }
+            else
+            {
+                result = rxHex.exactMatch(strLine);
+                if (result)
+                {
+                    bool ok;
+                    strLine.remove("0x");
+                    pwm << strLine.toInt(&ok, 16);
+                }
+                else
+                {
+                    emit Info("Error:PWM parameter setting error");
+                    return false;
+                }
+            }
+        }
+    }
+
+    exSystemConfig.PWM[0] = pwm[0];
+    exSystemConfig.PWM[1] = pwm[1];
+    return true;
 }
 
 bool CodeParse::parseLcdType(QString data)
@@ -993,7 +1174,6 @@ bool CodeParse::parseUserPower(QString &data,QList<uint8_t>&power)
 
     power.prepend(powerAmount);
 
-    qDebug()<<power;
     return true;
 }
 
@@ -1098,7 +1278,6 @@ bool CodeParse::compile()
                 {
                     mSystemConfig.ProjectName[counter++] = c.toLatin1();
                 }
-                qDebug()<<(char*)mSystemConfig.ProjectName;
             }
             break;
 
@@ -1194,6 +1373,24 @@ bool CodeParse::compile()
             emit Info("Info:find font scale");
             break;
 
+        case 12:
+            isExSystemConfig = true;
+            result<<parseHWID(data[i0]);
+            emit Info("Info:find hardware id voltage");
+            break;
+
+        case 13:
+            isExSystemConfig = true;
+            result<<parseTE(data[i0]);
+            emit Info("Info:find TE settings");
+            break;
+
+        case 14:
+            isExSystemConfig = true;
+            result<<parsePWM(data[i0]);
+            emit Info("Info:find PWM settings");
+            break;
+
         default:
             break;
         }
@@ -1246,7 +1443,6 @@ bool CodeParse::compile()
             mCompiledPara<<*p++;
         }
     }
-    qDebug()<<mCompiledPara.size();
 
     DataToSerial.clear();
 
@@ -1261,7 +1457,6 @@ bool CodeParse::compile()
     {
         DataToSerial.append(0xff);
     }
-
 
     emit Info("OK:compile success\n");
     return true;
