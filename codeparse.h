@@ -57,6 +57,7 @@ typedef struct
     uint16_t HardwareID[2];
     uint16_t TE[2];
     uint32_t PWM[2];
+    uint16_t ReadBack[8];
 } UserConfigTypeDef;
 
 
@@ -226,6 +227,7 @@ public:
     bool parseHWID(QString data);
     bool parseTE(QString data);
     bool parsePWM(QString data);
+    bool parseReadBack(QString data);
     bool compile(void);
     void updateStr(QString& str);
 

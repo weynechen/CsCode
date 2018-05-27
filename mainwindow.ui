@@ -120,6 +120,7 @@ background-color: rgb(235, 243, 255);
     <addaction name="actionFont"/>
     <addaction name="actioncomment_"/>
     <addaction name="actionUncomment_"/>
+    <addaction name="actionClear"/>
    </widget>
    <widget class="QMenu" name="menu_3">
     <property name="title">
@@ -349,6 +350,15 @@ background-color: rgb(235, 243, 255);
   <action name="actionUpgrade">
    <property name="text">
     <string>升级固件</string>
+   </property>
+  </action>
+  <action name="actionClear">
+   <property name="icon">
+    <iconset resource="qrc.qrc">
+     <normaloff>:/new/prefix1/images/clear.png</normaloff>:/new/prefix1/images/clear.png</iconset>
+   </property>
+   <property name="text">
+    <string>清除</string>
    </property>
   </action>
  </widget>

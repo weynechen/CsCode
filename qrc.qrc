@@ -12,5 +12,6 @@
         <file>images/burn.png</file>
         <file>images/code.png</file>
         <file>images/new.png</file>
+        <file>images/clear.png</file>
     </qresource>
 </RCC>

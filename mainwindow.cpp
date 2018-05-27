@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     initAction();
     recoverCustom();
-    mMsg->appendPlainText("Current Version:V2.6.0\nUpdate date:2018.01.22\n");
+    mMsg->appendPlainText("Current Version:V2.7.0\nUpdate date:2018.05.27\n");
 
 }
 
@@ -305,6 +305,11 @@ void MainWindow::openUpgradeDialog()
     this->mCommandEdit->insertPlainText("-> ");
 
     this->mCommandEdit->insertPlainText("upgrade "+fileName);
+}
+
+void MainWindow::clearMsg()
+{
+    mMsg->clear();
 }
 
 
@@ -794,6 +799,7 @@ void MainWindow::initAction()
     ui->toolBar->addAction(ui->actionCompile);
     ui->toolBar->addAction(ui->actionDownload);
     ui->toolBar->addAction(ui->actionFlash);
+    ui->toolBar->addAction(ui->actionClear);
 
     //菜单信号槽
     connect(ui->actionOpenFile, SIGNAL(triggered(bool)), this,
@@ -815,6 +821,7 @@ void MainWindow::initAction()
     connect(ui->actionNew, SIGNAL(triggered(bool)), this, SLOT(createNewFile()));
     connect(ui->actionBurnConfig, SIGNAL(triggered(bool)), mUpdateConfig, SLOT(show()));
     connect(ui->actionUpgrade,SIGNAL(triggered(bool)),this,SLOT(openUpgradeDialog()));
+    connect(ui->actionClear,SIGNAL(triggered(bool)),this,SLOT(clearMsg()));
 
     //刚开始禁用保存
     ui->actionSaveFile->setEnabled(false);

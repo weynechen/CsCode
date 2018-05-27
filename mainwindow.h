@@ -113,6 +113,7 @@ private slots:
     void burnConfig();
     void pollUSBStatus();
     void openUpgradeDialog();
+    void clearMsg();
 
 protected:
     void closeEvent(QCloseEvent *event);

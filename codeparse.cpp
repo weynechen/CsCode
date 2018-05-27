@@ -10,7 +10,7 @@ CodeParse::CodeParse(QObject *parent) : QObject(parent), mPower(0), mBacklight(0
     isUserPowerSet(false)
 {
     mTitleStr << "project name" << "power" << "backlight" << "LCD parameter" << "MIPI setting" << "LCD initial code" << "pattern" << "auto run"<<"lcd type"
-              <<"power on sequence"<<"power off sequence"<<"font scale"<<"hardware id voltage"<<"TE frequence"<<"PWM frequence";
+              <<"power on sequence"<<"power off sequence"<<"font scale"<<"hardware id voltage"<<"TE frequence"<<"PWM frequence"<<"read back value check";
     mPowerStr << "1.8V" << "2.8V" << "3.3V" << "VSP" << "VSN"<<"5V"<<"MTP"<<"AVDD";
     mLcdParaStr << "pix clock" << "horizontal resolution" << "vertical resolution" << "horizontal back porch"
                 << "horizontal front porch" << "horizontal sync pulse width" << "vertical back porch" << "vertical front porch"
@@ -27,14 +27,16 @@ CodeParse::CodeParse(QObject *parent) : QObject(parent), mPower(0), mBacklight(0
     {
         *(p + i) = qrand() % 0xff;
     }
+    memset(&exSystemConfig,0,sizeof(exSystemConfig));
     p = (uint8_t *)&exSystemConfig;
-    for (int i = 0; i < sizeof(exSystemConfig); i++)
+    for (int i = 0; i < sizeof(mSystemConfig); i++)
     {
         *(p + i) = qrand() % 0xff;
     }
 
     memset(&mSystemConfig.ProjectName,0,MAX_NAME_LEN);
     memset(&exSystemConfig.ProjectName,0,MAX_NAME_LEN);
+
 }
 
 
@@ -793,7 +795,11 @@ bool CodeParse::parseHWID(QString data)
             }
         }
     }
-
+    if(hw[1] < hw[0])
+    {
+        emit Info("Error:HW parameter setting error\n"+QStringLiteral("最小值比最大值还大"));
+        return false;
+    }
     exSystemConfig.HardwareID[0] = hw[0];
     exSystemConfig.HardwareID[1] = hw[1];
 
@@ -855,7 +861,11 @@ bool CodeParse::parseTE(QString data)
             }
         }
     }
-
+    if(te[1] < te[0])
+    {
+        emit Info("Error:TE parameter setting error\n"+QStringLiteral("最小值比最大值还大"));
+        return false;
+    }
     exSystemConfig.TE[0] = te[0];
     exSystemConfig.TE[1] = te[1];
     return true;
@@ -916,9 +926,91 @@ bool CodeParse::parsePWM(QString data)
             }
         }
     }
+    if(pwm[1] < pwm[0])
+    {
+        emit Info("Error:PWM parameter setting error\n"+QStringLiteral("最小值比最大值还大"));
+        return false;
+    }
 
     exSystemConfig.PWM[0] = pwm[0];
     exSystemConfig.PWM[1] = pwm[1];
+    return true;
+}
+
+bool CodeParse::parseReadBack(QString data)
+{
+    if (data.isEmpty())
+    {
+        emit Info("Error:read back parameters error");
+        return false;
+    }
+
+    data.replace(QRegExp("\\n\\n+"), "\n");
+
+    QTextStream ts(&data);
+    QString strLine;
+    QList<quint16> value;
+
+    while(!ts.atEnd())
+    {
+        bool ok = true;
+        strLine = ts.readLine();
+
+        if(strLine.isEmpty())
+        {
+            continue;
+        }
+        else if (strLine.contains(QRegExp("\\s*\\(.*\\)\\s*")))
+        {
+            QRegExp rx("\\s*\\((.*),(.*)\\)");
+            if (strLine.indexOf(rx) != -1)
+            {
+                quint8 low = rx.cap(1).toInt(&ok, 0);
+                if(!ok)
+                {
+                    emit Info("Error:read back parameters error");
+                    return false;
+                }
+                quint8 high = rx.cap(2).toInt(&ok, 0);
+                if(!ok)
+                {
+                    emit Info("Error:read back parameters error");
+                    return false;
+                }
+
+                if(high < low)
+                {
+                    emit Info("Error:Read back parameter setting error\n"+QStringLiteral("最小值比最大值还大"));
+                    return false;
+                }
+
+                quint16 v = (quint16)(high<<8) | (quint16)low;
+                value<<v;
+            }
+        }
+        else
+        {
+            quint16 r = strLine.toInt(&ok,0);
+            if(!ok)
+            {
+                emit Info("Error:read back parameters error");
+                return false;
+            }
+            value<<r;
+        }
+    }
+
+    if(value.size()>15)
+    {
+        emit Info("Error:"+QStringLiteral("回读参数数量过多"));
+        return false;
+    }
+
+    exSystemConfig.ReadBack[0] = value.size();
+    for(int i=0;i<value.size();i++)
+    {
+        exSystemConfig.ReadBack[i+1] = value[i];
+    }
     return true;
 }
 
@@ -1261,7 +1353,6 @@ bool CodeParse::compile()
     isExSystemConfig = false;
     isUserPowerSet = false;
 
-    exSystemConfig.FontScale = 0;
     //根据title选择不同的解析函数
     foreach(QString s, title)
     {
@@ -1391,6 +1482,12 @@ bool CodeParse::compile()
             emit Info("Info:find PWM settings");
             break;
 
+        case 15:
+            isExSystemConfig = true;
+            result<<parseReadBack(data[i0]);
+            emit Info("Info:find read back check");
+            break;
+
         default:
             break;
         }
@@ -1399,16 +1496,17 @@ bool CodeParse::compile()
     }
 
 
-    uint16_t parameters = isExSystemConfig?(mTitleStr.size()-1):(mTitleStr.size()-2);
-    int reserveBytes = 0;//兼容以前的配置。模板中没有配置的，从exsystemconfig移除这些字节。
-    if(isExSystemConfig)
-    {
-        if(exSystemConfig.FontScale==0)
-        {
-            reserveBytes = 1;
-        }
-        result<<true;
-    }
+    const uint16_t noCheckParams = 4;
+    uint16_t parameters = isExSystemConfig?(mTitleStr.size()-1-noCheckParams):(mTitleStr.size()-(sizeof(UserConfigTypeDef) - sizeof(ConfigTypeDef)));
+    //(!不再兼容)int reserveBytes = 0;//兼容以前的配置。模板中没有配置的，从exsystemconfig移除这些字节。
+//    if(isExSystemConfig)
+//    {
+//        if(exSystemConfig.FontScale==0)
+//        {
+
+//        }
+//        result<<true;
+//    }
 
     if(result.size()<parameters)
     {
@@ -1438,7 +1536,7 @@ bool CodeParse::compile()
     if(isExSystemConfig)
     {
         p = (quint8 *)exSystemConfig.PowerOnSequence;
-        for(int i=0;i<sizeof(UserConfigTypeDef) - sizeof(ConfigTypeDef)-reserveBytes;i++)
+        for(int i=0;i<sizeof(UserConfigTypeDef) - sizeof(ConfigTypeDef);i++)
         {
             mCompiledPara<<*p++;
         }
