@@ -534,6 +534,7 @@ bool CodeParse::parsePattern(QString data)
         {
             pattern << PATTERN_STAY;
             quint16 p = s.remove(QRegExp("stay")).remove(QRegExp("\\s*")).toInt(&ok, 0);
+            p &= 0x7fff;
             pattern << (p >> 8);
             pattern << (p & 0xff);
             if (ok == false)
@@ -543,6 +544,19 @@ bool CodeParse::parsePattern(QString data)
             }
         }
 
+        if (s.contains(QRegExp("^force stay\\s+")))
+        {
+            pattern << PATTERN_STAY;
+            quint16 p = s.remove(QRegExp("force stay")).remove(QRegExp("\\s*")).toInt(&ok, 0);
+            p |= 0x8000;
+            pattern << (p >> 8);
+            pattern << (p & 0xff);
+            if (ok == false)
+            {
+                emit Info("Error:pattern setting error");
+                return false;
+            }
+        }
 
 
         if (s.contains(QRegExp("^PIC\\s+")))
