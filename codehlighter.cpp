@@ -19,14 +19,14 @@ CodeHlighter::CodeHlighter(QTextDocument *t) : QSyntaxHighlighter(t)
     decNum.exp = QRegExp("\\b\\d+");
     hr.append(decNum);
 
-    lineComment.format.setForeground(QColor(0, 127, 0));
-    lineComment.exp = QRegExp("//[^\n]*");
-    hr.append(lineComment);
-
     title.format.setForeground(Qt::darkBlue);
     title.format.setFontWeight(QFont::Bold);
     title.exp = QRegExp("\\[[\\s\\S]*\\]");
     hr.append(title);
+
+    lineComment.format.setForeground(QColor(0, 127, 0));
+    lineComment.exp = QRegExp("//[^\n]*");
+    hr.append(lineComment);
 
     atSymbol.format.setForeground(QColor(127, 127, 0));
     atSymbol.exp = QRegExp("@[\\S]+");

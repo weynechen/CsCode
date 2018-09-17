@@ -18,24 +18,7 @@ CodeParse::CodeParse(QObject *parent) : QObject(parent), mPower(0), mBacklight(0
     mLcdInit << "package" << "write" << "delay" << "read";
 
     powerList<< "1.8V" << "2.8V" << "3.3V" << "VSP" << "VSN"<<"5V"<<"MTP"<<"AVDD"<<"VCOM"<<"VGH"<<"VGL"<<"reset=high"<<"reset=low";
-    //初始化SystemConfig
-    QTime t;
-    t = QTime::currentTime();
-    qsrand(t.msec() + t.second() * 1000);
-    quint8 *p = (quint8 *)&mSystemConfig;
-    for (int i = 0; i < sizeof(mSystemConfig); i++)
-    {
-        *(p + i) = qrand() % 0xff;
-    }
-    memset(&exSystemConfig,0,sizeof(exSystemConfig));
-    p = (uint8_t *)&exSystemConfig;
-    for (int i = 0; i < sizeof(mSystemConfig); i++)
-    {
-        *(p + i) = qrand() % 0xff;
-    }
 
-    memset(&mSystemConfig.ProjectName,0,MAX_NAME_LEN);
-    memset(&exSystemConfig.ProjectName,0,MAX_NAME_LEN);
 
 }
 
@@ -1332,6 +1315,25 @@ bool CodeParse::compile()
 {
     QString str = mStrToParse;
 
+    //初始化SystemConfig
+    QTime t;
+    t = QTime::currentTime();
+    qsrand(t.msec() + t.second() * 1000);
+    quint8 *p = (quint8 *)&mSystemConfig;
+    for (int i = 0; i < sizeof(mSystemConfig); i++)
+    {
+        *(p + i) = qrand() % 0xff;
+    }
+    memset(&exSystemConfig,0,sizeof(exSystemConfig));
+    p = (uint8_t *)&exSystemConfig;
+    for (int i = 0; i < sizeof(mSystemConfig); i++)
+    {
+        *(p + i) = qrand() % 0xff;
+    }
+
+    memset(&mSystemConfig.ProjectName,0,MAX_NAME_LEN);
+    memset(&exSystemConfig.ProjectName,0,MAX_NAME_LEN);
+
     if (str.isEmpty())
     {
         emit Info("Error:code is empity");
@@ -1340,6 +1342,7 @@ bool CodeParse::compile()
     //删除所有注释
     str.remove(QRegExp("/\\*[^\\*]*[^/]*\\*/"));
     str.remove(QRegExp("//[^\n]*"));
+
     //分割title和para
     QStringList segments;
     QStringList title;
@@ -1355,10 +1358,11 @@ bool CodeParse::compile()
         }
         else
         {
-            title << s.section("]\n", 0, 0); //提取段落头
-            data << s.section("]\n", 1, 1);  //提取段落中的内容
+            title << s.section(QRegExp("\\]\\s+"),0,0); //提取段落头
+            data << s.section(QRegExp("\\]\\s+"),1,1);  //提取段落中的内容
         }
     }
+    qDebug()<<title;
 
     int i0 = 0;
     QList<bool>result;
@@ -1510,7 +1514,7 @@ bool CodeParse::compile()
     }
 
 
-    const uint16_t noCheckParams = 4;
+    const uint16_t noCheckParams = 5;
     uint16_t parameters = isExSystemConfig?(mTitleStr.size()-1-noCheckParams):(mTitleStr.size()-(sizeof(UserConfigTypeDef) - sizeof(ConfigTypeDef)));
     //(!不再兼容)int reserveBytes = 0;//兼容以前的配置。模板中没有配置的，从exsystemconfig移除这些字节。
 //    if(isExSystemConfig)
@@ -1541,7 +1545,7 @@ bool CodeParse::compile()
 
 
     //data
-    quint8 *p = (quint8 *)&mSystemConfig;
+    p = (quint8 *)&mSystemConfig;
     for (int i = 0; i < sizeof(ConfigTypeDef); i++)
     {
         mCompiledPara << *p++;
