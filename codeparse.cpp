@@ -644,6 +644,11 @@ bool CodeParse::parsePattern(QString data)
             pattern << CROSSTALK;
         }
 
+        if (s.contains(QRegExp("^crosstalk white\\s*")))
+        {
+            pattern << CROSSTALK_WHITE;
+        }
+
         if (s.contains(QRegExp("^chessboard\\s*")))
         {
             pattern << CHESSBOARD;
@@ -1342,6 +1347,7 @@ bool CodeParse::compile()
     //删除所有注释
     str.remove(QRegExp("/\\*[^\\*]*[^/]*\\*/"));
     str.remove(QRegExp("//[^\n]*"));
+    str.remove(QRegExp("\\r"));
 
     //分割title和para
     QStringList segments;
@@ -1540,6 +1546,8 @@ bool CodeParse::compile()
             return false;
         }
     }
+
+    memcpy(&exSystemConfig,&mSystemConfig,sizeof(mSystemConfig));
 
     mCompiledPara.clear();
 
