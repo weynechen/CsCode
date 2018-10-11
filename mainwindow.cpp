@@ -219,8 +219,8 @@ void MainWindow::showVersion()
 
 void MainWindow::contactUs()
 {
-    QMessageBox::information(this, QStringLiteral("联系我们"),
-                             QStringLiteral("请发送邮件至\ncoolsaven@coolsaven.com\n或者访问我们的网站\nwww.coolsaven.com\n获取更多帮助"));
+//    QMessageBox::information(this, QStringLiteral("联系我们"),
+//                             QStringLiteral("请发送邮件至\ncoolsaven@coolsaven.com\n或者访问我们的网站\nwww.coolsaven.com\n获取更多帮助"));
 }
 
 
@@ -780,7 +780,7 @@ void MainWindow::initStatusBar()
     mSerialPortStatus->setText(QStringLiteral("串口未设置"));
     mAuthor = new QLabel(ui->statusBar);
     mAuthor->setFrameStyle(QFrame::Sunken);
-    mAuthor->setText(QStringLiteral("酷赛威科技"));
+    //mAuthor->setText(QStringLiteral("酷赛威科技"));
     ui->statusBar->addPermanentWidget(mAuthor);
 
 }
