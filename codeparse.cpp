@@ -10,7 +10,7 @@ CodeParse::CodeParse(QObject *parent) : QObject(parent), mPower(0), mBacklight(0
     isUserPowerSet(false)
 {
     mTitleStr << "project name" << "power" << "backlight" << "LCD parameter" << "MIPI setting" << "LCD initial code" << "pattern" << "auto run"<<"lcd type"
-              <<"power on sequence"<<"power off sequence"<<"font scale"<<"hardware id voltage"<<"TE frequence"<<"PWM frequence"<<"read back value check";
+              <<"power on sequence"<<"power off sequence"<<"font scale"<<"hardware id voltage"<<"TE frequence"<<"PWM frequence"<<"read back value check"<<"auto power off";
     mPowerStr << "1.8V" << "2.8V" << "3.3V" << "VSP" << "VSN"<<"5V"<<"MTP"<<"AVDD";
     mLcdParaStr << "pix clock" << "horizontal resolution" << "vertical resolution" << "horizontal back porch"
                 << "horizontal front porch" << "horizontal sync pulse width" << "vertical back porch" << "vertical front porch"
@@ -722,6 +722,29 @@ bool CodeParse::parseAutoRun(QString data)
 }
 
 
+
+bool CodeParse::parseAutoPowerOff(QString data)
+{
+    if (data.isEmpty())
+    {
+        return false;
+    }
+    data.remove("\n");
+    data.remove(QRegExp("\\s+"));
+    if (data == "NO")
+    {
+        exSystemConfig.autoPowerOff = 0;
+        return true;
+    }
+    else if (data == "YES")
+    {
+        exSystemConfig.autoPowerOff = 1;
+        return true;
+    }
+    return false;
+}
+
+
 bool CodeParse::parseFontScale(QString data)
 {
     if (data.isEmpty())
@@ -1338,7 +1361,7 @@ bool CodeParse::compile()
 
     memset(&mSystemConfig.ProjectName,0,MAX_NAME_LEN);
     memset(&exSystemConfig.ProjectName,0,MAX_NAME_LEN);
-
+    exSystemConfig.autoPowerOff = 0;
     if (str.isEmpty())
     {
         emit Info("Error:code is empity");
@@ -1368,7 +1391,7 @@ bool CodeParse::compile()
             data << s.section(QRegExp("\\]\\s+"),1,1);  //提取段落中的内容
         }
     }
-    qDebug()<<title;
+    //qDebug()<<title;
 
     int i0 = 0;
     QList<bool>result;
@@ -1511,6 +1534,11 @@ bool CodeParse::compile()
             result<<parseReadBack(data[i0]);
             emit Info("Info:find read back check");
             break;
+
+        case 16:
+            isExSystemConfig = true;
+            result<<parseAutoPowerOff(data[i0]);
+            emit Info("Info:find auto power off");
 
         default:
             break;
