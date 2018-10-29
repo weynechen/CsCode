@@ -639,15 +639,16 @@ bool CodeParse::parsePattern(QString data)
             pattern << GRAYLEVEL_H;
         }
 
-        if (s.contains(QRegExp("^crosstalk\\s*")))
-        {
-            pattern << CROSSTALK;
-        }
 
         if (s.contains(QRegExp("^crosstalk white\\s*")))
         {
             pattern << CROSSTALK_WHITE;
         }
+        else if (s.contains(QRegExp("^crosstalk\\s*")))
+        {
+            pattern << CROSSTALK;
+        }
+
 
         if (s.contains(QRegExp("^chessboard\\s*")))
         {
