@@ -589,6 +589,11 @@ bool CodeParse::parsePattern(QString data)
             pattern << FLICKER_DOT;
         }
 
+        if (s.contains(QRegExp("^RGB White\\s*")))
+        {
+            pattern <<RGB_WHITE;
+        }
+
         if (s.contains(QRegExp("^vertical gray level +\\d+")))
         {
             pattern << GRAYLEVEL_V_USER;
@@ -1334,7 +1339,7 @@ bool CodeParse::parsePowerOffSequence(QString data)
 }
 
 
-void CodeParse::updateStr(QString& str)
+void CodeParse::updateStr(const QString& str)
 {
     mStrToParse = str;
 }

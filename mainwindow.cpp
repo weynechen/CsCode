@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     initAction();
     recoverCustom();
-    mMsg->appendPlainText("Current Version:V2.8.1\nUpdate date:2018.10.29\n");
+    mMsg->appendPlainText("Current Version:V2.8.2\nUpdate date:2019.04.14\n");
 
 }
 

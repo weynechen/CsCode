@@ -184,6 +184,7 @@ private:
         GRAYLEVEL_V_USER,
         GRAYLEVEL_H_USER,
         CROSSTALK_WHITE,
+        RGB_WHITE,
         PATTERN_END
     } PatternTypeDef;
 
@@ -232,7 +233,7 @@ public:
     bool parseReadBack(QString data);
     bool parseAutoPowerOff(QString data);
     bool compile(void);
-    void updateStr(QString& str);
+    void updateStr(const QString &str);
 
     QByteArray DataToSerial;
 
